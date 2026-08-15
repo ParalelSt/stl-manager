@@ -54,6 +54,8 @@ function parentOf(path: string): string {
 export class MemoryFileSystem implements FileSystem {
   readonly #files = new Map<string, MemoryEntry>();
   readonly #directories = new Set<string>();
+  readonly #symlinks = new Map<string, string>();
+  readonly #denied = new Set<string>();
   readonly #volumes: [string, number][];
   readonly #freeSpace: number;
   #clock = BASE_TIME_MS;
@@ -118,15 +120,40 @@ export class MemoryFileSystem implements FileSystem {
     return entry;
   }
 
+  /** Declares a directory that holds no files, so it can still be listed. */
+  seedDirectory(dir: string): void {
+    this.#directories.add(normalizePath(dir));
+  }
+
+  /** Declares a symbolic link, which the scanner must record but not follow. */
+  seedSymlink(linkPath: string, target: string): void {
+    this.#symlinks.set(normalizePath(linkPath), normalizePath(target));
+  }
+
+  /** Makes listing a directory fail, standing in for a permission error. */
+  denyRead(dir: string): void {
+    this.#denied.add(normalizePath(dir));
+  }
+
+  /** Returns the full contents keyed by path, for asserting nothing changed. */
+  snapshot(): Record<string, string> {
+    return Object.fromEntries(
+      [...this.#files.entries()].map(([path, entry]) => [path, entry.content]),
+    );
+  }
+
   async list(dir: string): Promise<DirEntry[]> {
     const normalized = normalizePath(dir);
+    if (this.#denied.has(normalized)) {
+      throw new Error(`EACCES: permission denied, scandir '${dir}'`);
+    }
     if (!this.#directoryExists(normalized)) {
       throw new Error(`ENOENT: no such directory, scandir '${dir}'`);
     }
     const prefix = normalized === "/" ? "/" : `${normalized}/`;
-    const children = new Map<string, boolean>();
+    const children = new Map<string, { isDirectory: boolean; isSymbolicLink: boolean }>();
 
-    const record = (path: string, isExplicitDirectory: boolean): void => {
+    const record = (path: string, isExplicitDirectory: boolean, isLink: boolean): void => {
       if (!path.startsWith(prefix)) {
         return;
       }
@@ -136,23 +163,29 @@ export class MemoryFileSystem implements FileSystem {
       }
       const slash = remainder.indexOf("/");
       const name = slash === -1 ? remainder : remainder.slice(0, slash);
-      const isDirectory = slash !== -1 || isExplicitDirectory;
-      children.set(name, (children.get(name) ?? false) || isDirectory);
+      const existing = children.get(name);
+      children.set(name, {
+        isDirectory: (existing?.isDirectory ?? false) || slash !== -1 || isExplicitDirectory,
+        isSymbolicLink: (existing?.isSymbolicLink ?? false) || isLink,
+      });
     };
 
     for (const path of this.#files.keys()) {
-      record(path, false);
+      record(path, false, false);
     }
     for (const path of this.#directories) {
-      record(path, true);
+      record(path, true, false);
+    }
+    for (const path of this.#symlinks.keys()) {
+      record(path, true, true);
     }
 
     return [...children.entries()]
-      .map(([name, isDirectory]) => ({
+      .map(([name, flags]) => ({
         name,
         path: `${prefix}${name}`,
-        isDirectory,
-        isSymbolicLink: false,
+        isDirectory: flags.isDirectory,
+        isSymbolicLink: flags.isSymbolicLink,
       }))
       .sort((left, right) => left.name.localeCompare(right.name));
   }
