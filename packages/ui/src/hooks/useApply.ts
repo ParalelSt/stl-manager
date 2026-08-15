@@ -1,6 +1,6 @@
 import { deriveMoves, posixPath } from "@stl-manager/core";
 import { useCallback, useMemo, useState } from "react";
-import { bridge } from "../bridge.js";
+import { useHost } from "../host.js";
 import { SCREEN, useAppStore } from "../store.js";
 
 /**
@@ -10,6 +10,7 @@ import { SCREEN, useAppStore } from "../store.js";
  * is gated behind an explicit confirmation rather than a single click.
  */
 export function useApply() {
+  const { transport } = useHost();
   const plan = useAppStore((state) => state.plan);
   const progress = useAppStore((state) => state.progress);
   const applied = useAppStore((state) => state.applied);
@@ -39,12 +40,12 @@ export function useApply() {
     setProgress(undefined);
     setError(undefined);
 
-    const unsubscribe = bridge().onProgress((event) => {
+    const unsubscribe = transport.onProgress((event) => {
       setProgress(event);
     });
 
     try {
-      const result = await bridge().applyPlan({ libraryRoot: plan.libraryRoot, moves });
+      const result = await transport.applyPlan({ libraryRoot: plan.libraryRoot, moves });
       if (!result.ok) {
         setError(result.error);
         return;

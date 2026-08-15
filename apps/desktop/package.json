@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@stl-manager/core": "*",
-    "@stl-manager/contracts": "*"
+    "@stl-manager/contracts": "*",
+    "@stl-manager/ui": "*"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

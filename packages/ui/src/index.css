@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/*
+ * Tailwind's automatic source detection starts from where the bundler runs,
+ * which is the application, not this package. The screens live here, so this
+ * directory has to be named explicitly or every utility class they use is
+ * dropped from the build.
+ */
+@source "./";
+
 /* Mirrors tokens.ts. Keep the two in step; tokens.test.ts enforces it. */
 @theme {
   --color-background: #faf9f6;

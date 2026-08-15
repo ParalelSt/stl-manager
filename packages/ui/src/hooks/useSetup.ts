@@ -1,5 +1,6 @@
-import { useCallback, useMemo } from "react";
-import { bridge } from "../bridge.js";
+import { useCallback, useMemo, useRef, useState } from "react";
+import type { OperationResult } from "@stl-manager/contracts";
+import { useHost } from "../host.js";
 import { SCREEN, useAppStore } from "../store.js";
 
 /**
@@ -15,6 +16,33 @@ function isInsideLibrary(root: string, libraryRoot: string): boolean {
 
 /** Drives the setup screen: choosing the library and the folders to scan. */
 export function useSetup() {
+  const { chooseDirectory: chooseFromPlatform } = useHost();
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const pickerResolve = useRef<((path: string | undefined) => void) | undefined>(undefined);
+
+  /**
+   * Asks the user for a folder.
+   *
+   * Uses the platform's own dialog when the host supplies one, and otherwise
+   * opens the interface's own directory browser. That fallback is the only
+   * place the desktop and browser builds diverge.
+   */
+  const chooseFolder = useCallback(async (): Promise<OperationResult<string | undefined>> => {
+    if (chooseFromPlatform !== undefined) {
+      return chooseFromPlatform();
+    }
+    setIsPickerOpen(true);
+    const chosen = await new Promise<string | undefined>((resolve) => {
+      pickerResolve.current = resolve;
+    });
+    setIsPickerOpen(false);
+    return { ok: true, value: chosen };
+  }, [chooseFromPlatform]);
+
+  const resolvePicker = useCallback((path: string | undefined) => {
+    pickerResolve.current?.(path);
+    pickerResolve.current = undefined;
+  }, []);
   const libraryRoot = useAppStore((state) => state.libraryRoot);
   const scanRoots = useAppStore((state) => state.scanRoots);
   const error = useAppStore((state) => state.error);
@@ -25,7 +53,7 @@ export function useSetup() {
   const goTo = useAppStore((state) => state.goTo);
 
   const chooseLibraryRoot = useCallback(async () => {
-    const result = await bridge().chooseDirectory();
+    const result = await chooseFolder();
     if (!result.ok) {
       setError(result.error);
       return;
@@ -37,7 +65,7 @@ export function useSetup() {
   }, [setError, setLibraryRoot]);
 
   const addScanRoot = useCallback(async () => {
-    const result = await bridge().chooseDirectory();
+    const result = await chooseFolder();
     if (!result.ok) {
       setError(result.error);
       return;
@@ -74,5 +102,7 @@ export function useSetup() {
     addScanRoot,
     removeScanRoot,
     start,
+    isPickerOpen,
+    resolvePicker,
   };
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { bridge } from "../bridge.js";
+import { useHost } from "../host.js";
 import { SCREEN, useAppStore } from "../store.js";
 
 /**
@@ -8,6 +8,7 @@ import { SCREEN, useAppStore } from "../store.js";
  * Nothing is written during this. The result is a proposal the user reviews.
  */
 export function useScan() {
+  const { transport } = useHost();
   const libraryRoot = useAppStore((state) => state.libraryRoot);
   const scanRoots = useAppStore((state) => state.scanRoots);
   const progress = useAppStore((state) => state.progress);
@@ -27,12 +28,12 @@ export function useScan() {
     setIsScanning(true);
     setProgress(undefined);
 
-    const unsubscribe = bridge().onProgress((event) => {
+    const unsubscribe = transport.onProgress((event) => {
       setProgress(event);
     });
 
     try {
-      const result = await bridge().buildPlan({ roots: scanRoots, libraryRoot });
+      const result = await transport.buildPlan({ roots: scanRoots, libraryRoot });
       if (!result.ok) {
         setError(result.error);
         return;

@@ -1,6 +1,6 @@
 import type { TreeFolder } from "@stl-manager/core";
 import { useCallback, useEffect, useState } from "react";
-import { bridge } from "../bridge.js";
+import { useHost } from "../host.js";
 import { SCREEN, useAppStore } from "../store.js";
 
 /**
@@ -11,6 +11,7 @@ import { SCREEN, useAppStore } from "../store.js";
  * would need its own file operation and its own undo.
  */
 export function useLibrary() {
+  const { transport } = useHost();
   const libraryRoot = useAppStore((state) => state.libraryRoot);
   const goTo = useAppStore((state) => state.goTo);
 
@@ -24,7 +25,7 @@ export function useLibrary() {
     }
     setIsLoading(true);
     try {
-      const result = await bridge().readLibrary({ libraryRoot });
+      const result = await transport.readLibrary({ libraryRoot });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -41,7 +42,7 @@ export function useLibrary() {
   }, [refresh]);
 
   const reveal = useCallback((path: string) => {
-    void bridge().revealInFinder({ path });
+    void transport.revealInFinder({ path });
   }, []);
 
   const back = useCallback(() => {

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { bridge } from "../bridge.js";
+import { useHost } from "../host.js";
 import { SCREEN, useAppStore } from "../store.js";
 
 /** Drives the history screen: past runs, and reversing one. */
 export function useHistory() {
+  const { transport } = useHost();
   const libraryRoot = useAppStore((state) => state.libraryRoot);
   const runs = useAppStore((state) => state.runs);
   const error = useAppStore((state) => state.error);
@@ -18,7 +19,7 @@ export function useHistory() {
     if (libraryRoot === undefined) {
       return;
     }
-    const result = await bridge().listRuns({ libraryRoot });
+    const result = await transport.listRuns({ libraryRoot });
     if (!result.ok) {
       setError(result.error);
       return;
@@ -44,7 +45,7 @@ export function useHistory() {
     }
     setIsWorking(true);
     try {
-      const result = await bridge().undoRun({ libraryRoot, runId: pendingUndoId });
+      const result = await transport.undoRun({ libraryRoot, runId: pendingUndoId });
       if (!result.ok) {
         setError(result.error);
         return;

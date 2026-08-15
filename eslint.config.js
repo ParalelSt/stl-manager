@@ -44,6 +44,27 @@ export default tseslint.config(
     },
   },
   {
+    // The interface package is bundled for both Electron and a browser, so it
+    // must never reach for Node or Electron. Finding out at Docker build time
+    // is far too late.
+    files: ["packages/ui/**/*.ts", "packages/ui/**/*.tsx"],
+    ignores: ["packages/ui/**/*.test.ts", "packages/ui/**/*.test.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["node:*", "electron", "@stl-manager/core/node"],
+              message:
+                "The interface package must run in a browser as well as in Electron, so it cannot import Node, Electron, or the engine's Node entry point.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["**/*.mjs", "**/*.js"],
     languageOptions: {
       globals: NODE_GLOBALS,

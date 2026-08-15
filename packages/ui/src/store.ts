@@ -1,7 +1,7 @@
 import type { PlanModel, RunSummary } from "@stl-manager/core";
 import { create } from "zustand";
 import type { ProgressEvent } from "@stl-manager/contracts";
-import type { AppliedRun } from "./bridge.js";
+import type { AppliedRun } from "./host.js";
 
 /** The screens the application moves between. */
 export const SCREEN = {
