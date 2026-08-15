@@ -1,4 +1,5 @@
 import { Button, BUTTON_TONE } from "../components/Button.js";
+import { DirectoryPicker } from "../components/DirectoryPicker.js";
 import { FolderIcon } from "../components/icons/FolderIcon.js";
 import { WarningIcon } from "../components/icons/WarningIcon.js";
 import { useSetup } from "../hooks/useSetup.js";
@@ -13,6 +14,8 @@ export function SetupScreen() {
     addScanRoot,
     removeScanRoot,
     start,
+    isPickerOpen,
+    resolvePicker,
   } = useSetup();
 
   const libraryValue =
@@ -56,8 +59,13 @@ export function SetupScreen() {
       </p>
     );
 
+  const picker = !isPickerOpen ? null : (
+    <DirectoryPicker title="Choose a folder" onChoose={resolvePicker} />
+  );
+
   return (
     <div className="mx-auto grid max-w-5xl grid-cols-12 gap-x-8 px-10 pt-16 pb-24">
+      {picker}
       <header className="col-span-12 mb-16 md:col-span-7">
         <p className="text-muted text-xs tracking-[0.2em] uppercase">Step one</p>
         <h1 className="font-serif mt-3 text-5xl leading-tight">Choose where things go</h1>

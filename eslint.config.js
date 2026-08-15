@@ -11,7 +11,7 @@ const NODE_GLOBALS = {
 
 export default tseslint.config(
   {
-    ignores: ["**/dist/**", "**/out/**", "**/release/**", "**/coverage/**"],
+    ignores: ["**/dist/**", "**/dist-web/**", "**/out/**", "**/release/**", "**/coverage/**"],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,

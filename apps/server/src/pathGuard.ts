@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import { realpath } from "node:fs/promises";
 import { basename, isAbsolute, resolve as resolvePath, sep } from "node:path";
 import type { RootInfo } from "@stl-manager/contracts";
@@ -58,7 +59,20 @@ function isInside(candidate: string[], root: string[]): boolean {
  * @returns The guard
  */
 export function createPathGuard(roots: string[]): PathGuard {
-  const rootSegments = roots.map((root) => segmentsOf(resolvePath(root)));
+  // The roots are resolved through realpath too, once, at startup. Requested
+  // paths are compared after realpath, so a root that is itself a symlink
+  // would otherwise never match anything: /tmp is a link to /private/tmp on
+  // macOS, and a mounted volume can be a link inside a container.
+  const realRoots = roots.map((root) => {
+    try {
+      return realpathSync(root);
+    } catch {
+      // A root that does not exist yet stays lexical; requests naming it will
+      // fail at their own realpath with the usual message.
+      return resolvePath(root);
+    }
+  });
+  const rootSegments = realRoots.map((root) => segmentsOf(root));
 
   return {
     async resolve(requested: string): Promise<string> {

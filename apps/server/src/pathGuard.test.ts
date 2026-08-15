@@ -171,3 +171,33 @@ describe("PathGuard.confineNew", () => {
     expect(() => guard.confineNew(`${root}-backup/a.stl`, root)).toThrow();
   });
 });
+
+describe("PathGuard with a symlinked root", () => {
+  let base: string;
+  let real: string;
+  let link: string;
+
+  beforeEach(async () => {
+    base = await realpath(await mkdtemp(join(tmpdir(), "stl-linkroot-")));
+    real = join(base, "real");
+    link = join(base, "link");
+    await mkdir(join(real, "models"), { recursive: true });
+    await symlink(real, link);
+  });
+
+  afterEach(async () => {
+    await rm(base, { recursive: true, force: true });
+  });
+
+  it("accepts paths when the configured root is itself a symlink", async () => {
+    // This is the shape of /tmp on macOS and of a linked volume in a container.
+    const guard = createPathGuard([link]);
+    await expect(guard.resolve(join(link, "models"))).resolves.toBe(join(real, "models"));
+    await expect(guard.resolve(join(real, "models"))).resolves.toBe(join(real, "models"));
+  });
+
+  it("still refuses everything outside a symlinked root", async () => {
+    const guard = createPathGuard([link]);
+    await expect(guard.resolve(base)).rejects.toThrow();
+  });
+});

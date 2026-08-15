@@ -1,4 +1,5 @@
 import type { FileSystem, PathUtil } from "@stl-manager/core";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import type { ServerConfig } from "./config.js";
 import type { JobRegistry } from "./jobs.js";
@@ -17,6 +18,8 @@ export interface AppOptions {
   path: PathUtil;
   /** Supplied by tests that need to inspect or control jobs. */
   jobs?: JobRegistry;
+  /** Where the built interface lives. Omit to serve no interface at all. */
+  webRoot?: string;
 }
 
 /** The prefix every authenticated route sits under. */
@@ -65,6 +68,20 @@ export function createApp(options: AppOptions): Hono {
 
   app.route(API_PREFIX, browseRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, workRoutes({ guard, jobs, lock, fs: options.fs, path: options.path }));
+
+  // Anything under /api that reached this far is a real miss. Answering with
+  // the interface's HTML instead would surface as a confusing JSON parse
+  // failure in the client rather than an honest 404.
+  app.all(`${API_PREFIX}/*`, (context) =>
+    context.json({ ok: false, error: "No such endpoint." }, 404),
+  );
+
+  const webRoot = options.webRoot;
+  if (webRoot !== undefined) {
+    app.use("/*", serveStatic({ root: webRoot }));
+    // The interface routes on the client, so an unknown path is its business.
+    app.get("/*", serveStatic({ path: "index.html", root: webRoot }));
+  }
 
   return app;
 }
