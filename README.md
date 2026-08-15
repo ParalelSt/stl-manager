@@ -9,38 +9,44 @@ run can be reversed.
 
 ## Status
 
-Phase 1 of 5: the sorter, running on a single machine. Networking, Docker,
-peer sharing and Google Drive are planned but not built. See
-`docs/design/2026-08-15-sorter-design.md`.
+Phases 1 and 2 of 5 are built: the sorter, and a server that runs the same
+sorter in a container with a browser interface. Peer sharing, remote access and
+Google Drive are designed but not built. See the documents in `docs/design/`.
 
 ## How the sorting works
 
-**Grouping by name.** A file's name is normalised before it is compared:
-lowercased, with underscores, hyphens and dots treated as spaces, and any
-duplicate marker removed. So `Space_Marine.stl`, `space marine.stl` and
-`Space-Marine (2).stl` are all the same model.
-
-A trailing number is only treated as a duplicate marker when it is in
-parentheses, or follows the word `copy`. `tower 2.stl` keeps its number,
-because a bare trailing number is far more often part of a model's name than a
-sign of duplication.
-
-**Grouping by purpose.** A group is placed under a shared parent folder named
-after the folder its files came from, but only when that folder held two or
-more distinct models. A folder holding a single model is not a category, it is
-just where that model happened to sit.
+**Grouping into families.** Models whose names begin with the same word belong
+together, applied so that a whole family collects even when its members only
+share their opening. The folder takes the longest run of words every member has
+in common, so it names itself.
 
 ```
 Library/
-  Terrain/                 the source folder held several models
-    Ruined Tower/
-      ruined_tower.stl
-    Barricade/
-      barricade.stl
-  Space Marine/            this model stood alone in its folder
-    space_marine.stl
-  _Duplicates/             copies set aside, never deleted
+  kit/                     kit_base, kit_lip, kit_straight
+  vacuum_adapter/          six models sharing that opening
+  2853/                    2853_fixed, 2853_hole_plus_0p20...
 ```
+
+Each model keeps its own filename. Only the folder is named after the family,
+because a family holds several distinct models rather than several copies of
+one.
+
+**Numbered sets.** Files numbered in a run within one folder are recognised as
+a set even though their names share no word, since `01_adapter` through
+`08_filter_cone` is plainly one kit. The set takes its folder's name, or is
+labelled `Numbered set` for you to rename when that folder's name says nothing
+useful.
+
+**Shared parent folders.** A family sits under a parent named after the folder
+its files came from, but only when that folder held two or more families and
+its name actually describes something. Folders called `Downloads`, `Desktop`,
+`Models` or `Unsorted` never become categories: they say where a file landed,
+not what it is.
+
+**Names.** A file's name is normalised before it is compared: lowercased, with
+underscores, hyphens and dots treated as spaces, and any duplicate marker
+removed. A trailing number counts as a duplicate marker only in parentheses or
+after the word `copy`, so `tower 2.stl` keeps its number.
 
 **Duplicates.** Where several files share a name, the highest duplicate number
 wins, and the newest file breaks a tie. Before any file is set aside it is
@@ -78,7 +84,7 @@ Undo replays that journal backwards. It never overwrites: if something already
 occupies a file's original location, that file is reported and skipped rather
 than replacing what is there.
 
-## Running it
+## Running the desktop application
 
 Requires Node 22 or newer.
 
@@ -91,6 +97,22 @@ npm run dev -w apps/desktop
 If Electron starts but no window appears, check whether your terminal exports
 `ELECTRON_RUN_AS_NODE`. Some editors set it, and it makes Electron run as plain
 Node. The npm scripts unset it.
+
+## Running the server
+
+```
+cp docker-compose.example.yml docker-compose.yml
+# edit the volumes to match your machine
+docker compose up -d
+docker compose logs
+```
+
+The log prints an access token on first start. Open `http://localhost:8080`,
+paste it once, and the browser remembers it.
+
+Note that the folders you choose in the browser are container paths such as
+`/data/downloads`, not host paths. See `docs/running-the-server.md` for volumes,
+file ownership, and the rest.
 
 ## Licence
 

@@ -41,3 +41,6 @@ coverage/
 
 # Electron build output
 apps/desktop/out/
+
+# Server web build
+apps/server/dist-web/

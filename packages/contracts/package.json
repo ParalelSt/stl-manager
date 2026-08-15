@@ -1,5 +1,5 @@
 {
-  "name": "@stl-manager/core",
+  "name": "@stl-manager/contracts",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -10,18 +10,13 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./node": {
-      "types": "./dist/node.d.ts",
-      "default": "./dist/node.js"
-    },
-    "./testing": {
-      "types": "./dist/testing.d.ts",
-      "default": "./dist/testing.js"
     }
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
   }
 }

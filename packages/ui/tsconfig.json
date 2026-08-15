@@ -8,16 +8,15 @@
       "DOM",
       "DOM.Iterable"
     ],
-    "types": [
-      "node"
-    ],
     "jsx": "react-jsx",
     "noEmit": true,
-    "allowImportingTsExtensions": true
+    "types": []
   },
   "include": [
-    "src",
-    "electron.vite.config.ts",
-    "vitest.config.ts"
+    "src"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
   ]
 }

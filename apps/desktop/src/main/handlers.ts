@@ -20,21 +20,17 @@ import {
   IPC_CHANNEL,
   listRunsRequestSchema,
   parseRequest,
+  type OperationResult,
   PROGRESS_KIND,
   readLibraryRequestSchema,
   revealRequestSchema,
   undoRunRequestSchema,
   type ProgressEvent,
-} from "../shared/ipc.js";
+} from "@stl-manager/contracts";
 
 const { dialog, ipcMain, shell } = electron;
 
 const fs = new NodeFileSystem();
-
-/** The result of an operation, carrying either a value or a reason it failed. */
-export type OperationResult<Value> =
-  | { ok: true; value: Value }
-  | { ok: false; error: string };
 
 function describeError(error: unknown): string {
   if (error instanceof Error) {

@@ -3,9 +3,12 @@
 ## Layout
 
 ```
-packages/core     the engine. pure TypeScript, no UI, no Electron
-apps/desktop      Electron main process, preload bridge, React renderer
-docs/design       design documents, one per phase
+packages/core        the engine. pure TypeScript, no UI, no Electron
+packages/contracts   request schemas, shared by every client
+packages/ui          the screens. no Electron, no Node, no server
+apps/desktop         Electron main process, preload bridge, renderer
+apps/server          Node and Hono, runs in Docker, serves the same screens
+docs/design          design documents, one per phase
 ```
 
 ## Getting set up
@@ -32,9 +35,14 @@ interface.
 This is enforced by lint, not by convention, so a violation fails the build.
 `nodeFileSystem.ts` is the single exemption.
 
-The renderer follows the same principle: it has no filesystem access and never
-imports the engine's Node entry point. Everything it can do is listed in
-`StlManagerApi` in `apps/desktop/src/renderer/src/bridge.ts`.
+`packages/ui` follows the same principle and is held to it by lint as well: it
+may not import `node:*`, `electron`, or `@stl-manager/core/node`, because the
+same screens are bundled for a browser. Everything the interface can do is
+listed in `Transport` in `packages/ui/src/transport.ts`.
+
+The engine's package has three entry points for this reason. `@stl-manager/core`
+is pure and bundles anywhere, `@stl-manager/core/node` holds the filesystem
+adapter, and `@stl-manager/core/testing` holds the in-memory one.
 
 ## The pipeline
 
@@ -64,7 +72,17 @@ Run `npm test` for everything, or `npm test -w packages/core` for the engine.
 
 After building the desktop app, `npm run smoke -w apps/desktop` loads the real
 renderer in a hidden window and checks the preload bridge, context isolation
-and the stylesheet. Unit tests cannot cover any of that.
+and the stylesheet. Unit tests cannot cover any of that. It asserts an exact
+list of the methods the renderer is given, so widening what the interface can
+reach is a deliberate act rather than an accident.
+
+`npm run test:container -w apps/server` builds the Docker image and sorts a
+fixture inside it, checking that the files come out owned by the host user
+rather than root. Nothing else can catch that.
+
+Server tests place their fixtures under `/tmp` rather than the system temp
+directory. On macOS the latter resolves under `/private/var`, which the scanner
+excludes as system state, so a fixture there is invisible to a scan.
 
 ## Style
 
