@@ -9,7 +9,8 @@
     "build": "tsc -p tsconfig.json && vite build",
     "start": "node dist/main.js",
     "test": "vitest run",
-    "build:server": "tsc -p tsconfig.json"
+    "build:server": "tsc -p tsconfig.json",
+    "test:container": "sh scripts/containerTest.sh"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.9",
