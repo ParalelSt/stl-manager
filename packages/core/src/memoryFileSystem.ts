@@ -273,3 +273,33 @@ export class MemoryFileSystem implements FileSystem {
     return this.#freeSpace;
   }
 }
+
+/**
+ * Copies a MemoryFileSystem's methods into a plain object, bound to the
+ * original instance.
+ *
+ * Tests that want to observe or intercept one operation need a wrapper. A
+ * Proxy will not do: MemoryFileSystem uses private fields, so any method
+ * invoked with the proxy as `this` throws rather than reaching the real state.
+ * Binding avoids that, and fails loudly at compile time if the FileSystem
+ * interface gains a method.
+ *
+ * @param fs - The instance to wrap
+ * @returns A plain object delegating every call to it
+ */
+export function toPlainFileSystem(fs: MemoryFileSystem): FileSystem {
+  return {
+    list: fs.list.bind(fs),
+    stat: fs.stat.bind(fs),
+    exists: fs.exists.bind(fs),
+    mkdir: fs.mkdir.bind(fs),
+    move: fs.move.bind(fs),
+    copy: fs.copy.bind(fs),
+    remove: fs.remove.bind(fs),
+    hash: fs.hash.bind(fs),
+    readChunk: fs.readChunk.bind(fs),
+    appendLine: fs.appendLine.bind(fs),
+    readLines: fs.readLines.bind(fs),
+    freeSpace: fs.freeSpace.bind(fs),
+  };
+}

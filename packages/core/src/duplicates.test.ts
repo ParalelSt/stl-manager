@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolveDuplicates, selectWinner } from "./duplicates.js";
-import { MemoryFileSystem } from "./memoryFileSystem.js";
+import { MemoryFileSystem, toPlainFileSystem } from "./memoryFileSystem.js";
+import type { FileSystem } from "./fileSystem.js";
 import { FILE_KIND, type ScannedFile } from "./types.js";
 
 function file(path: string, overrides: Partial<ScannedFile> = {}): ScannedFile {
@@ -114,14 +115,13 @@ describe("resolveDuplicates", () => {
       "/a/tower (2).stl": { content: "bb" },
     });
     let hashCalls = 0;
-    const counting = new Proxy(fs, {
-      get(target, property, receiver) {
-        if (property === "hash") {
-          hashCalls += 1;
-        }
-        return Reflect.get(target, property, receiver);
+    const counting: FileSystem = {
+      ...toPlainFileSystem(fs),
+      hash: async (path: string): Promise<string> => {
+        hashCalls += 1;
+        return fs.hash(path);
       },
-    });
+    };
     await resolveDuplicates(
       [
         file("/a/tower.stl", { size: 1 }),
