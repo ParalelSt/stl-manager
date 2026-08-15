@@ -27,13 +27,25 @@ export {
   type RunSummary,
 } from "./journal.js";
 export { parseDuplicateIndex, toNameKey } from "./nameKey.js";
+export {
+  isValidGroupName,
+  mergeGroups,
+  renameGroup,
+  setExcluded,
+  setPurpose,
+  splitGroup,
+} from "./planEditor.js";
 export { NodeFileSystem } from "./nodeFileSystem.js";
 export {
+  deriveMoves,
+  folderFor,
   MOVE_REASON,
   plan,
   QUARANTINE_FOLDER,
+  type GroupPlan,
   type MoveReason,
   type PlannedMove,
+  type PlanModel,
   type PlanOptions,
   type SortPlan,
 } from "./planner.js";
