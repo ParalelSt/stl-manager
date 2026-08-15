@@ -1,8 +1,12 @@
 import type { FileSystem, PathUtil } from "@stl-manager/core";
 import { Hono } from "hono";
 import type { ServerConfig } from "./config.js";
+import type { JobRegistry } from "./jobs.js";
+import { createApplyLock } from "./applyLock.js";
+import { createJobRegistry } from "./jobs.js";
 import { createPathGuard } from "./pathGuard.js";
 import { browseRoutes } from "./routes/browse.js";
+import { workRoutes } from "./routes/work.js";
 import { isTokenValid } from "./token.js";
 
 /** Everything the application needs, supplied rather than read from anywhere. */
@@ -11,6 +15,8 @@ export interface AppOptions {
   token: string;
   fs: FileSystem;
   path: PathUtil;
+  /** Supplied by tests that need to inspect or control jobs. */
+  jobs?: JobRegistry;
 }
 
 /** The prefix every authenticated route sits under. */
@@ -54,7 +60,11 @@ export function createApp(options: AppOptions): Hono {
   });
 
   const guard = createPathGuard(options.config.roots);
+  const jobs = options.jobs ?? createJobRegistry();
+  const lock = createApplyLock();
+
   app.route(API_PREFIX, browseRoutes({ guard, fs: options.fs, path: options.path }));
+  app.route(API_PREFIX, workRoutes({ guard, jobs, lock, fs: options.fs, path: options.path }));
 
   return app;
 }

@@ -12,6 +12,20 @@ export interface PathGuard {
    * @throws when the path escapes the roots, does not exist, or is not usable
    */
   resolve(requested: string): Promise<string>;
+  /**
+   * Confines a path that does not exist yet, such as a destination.
+   *
+   * `realpath` cannot be used on something that is not there, so containment
+   * is decided lexically instead. Safe only for paths beneath a root that has
+   * already been resolved, which is why the containing directory is required
+   * rather than inferred.
+   *
+   * @param requested - The path being written to
+   * @param withinResolved - An already-resolved directory it must sit inside
+   * @returns The normalised path
+   * @throws when the path escapes the given directory
+   */
+  confineNew(requested: string, withinResolved: string): string;
   /** The roots, as the interface should offer them. */
   roots(): RootInfo[];
 }
@@ -73,6 +87,20 @@ export function createPathGuard(roots: string[]): PathGuard {
       }
 
       return real;
+    },
+
+    confineNew(requested: string, withinResolved: string): string {
+      if (requested === "" || !isAbsolute(requested)) {
+        throw new Error("A path must be absolute.");
+      }
+      if (requested.includes("\0")) {
+        throw new Error("A path may not contain a null byte.");
+      }
+      const normalised = resolvePath(requested);
+      if (!isInside(segmentsOf(normalised), segmentsOf(withinResolved))) {
+        throw new Error("That destination is outside the library.");
+      }
+      return normalised;
     },
 
     roots(): RootInfo[] {

@@ -124,3 +124,50 @@ describe("PathGuard", () => {
     await expect(guard.resolve(outside)).rejects.not.toThrow(new RegExp(outside));
   });
 });
+
+describe("PathGuard.confineNew", () => {
+  let base: string;
+  let root: string;
+  let guard: PathGuard;
+
+  beforeEach(async () => {
+    base = await realpath(await mkdtemp(join(tmpdir(), "stl-new-")));
+    root = join(base, "lib");
+    await mkdir(root, { recursive: true });
+    guard = createPathGuard([root]);
+  });
+
+  afterEach(async () => {
+    await rm(base, { recursive: true, force: true });
+  });
+
+  it("accepts a destination that does not exist yet", () => {
+    expect(guard.confineNew(join(root, "kit", "kit_base.stl"), root)).toBe(
+      join(root, "kit", "kit_base.stl"),
+    );
+  });
+
+  it("normalises a harmless dot segment", () => {
+    expect(guard.confineNew(join(root, "kit", ".", "a.stl"), root)).toBe(join(root, "kit", "a.stl"));
+  });
+
+  it("refuses a destination escaping with ..", () => {
+    expect(() => guard.confineNew(join(root, "..", "elsewhere.stl"), root)).toThrow(/outside/i);
+  });
+
+  it("refuses a destination escaping from deep inside", () => {
+    expect(() => guard.confineNew(join(root, "a", "b", "..", "..", "..", "x.stl"), root)).toThrow();
+  });
+
+  it("refuses an absolute destination elsewhere", () => {
+    expect(() => guard.confineNew("/etc/passwd", root)).toThrow();
+  });
+
+  it("refuses a relative destination", () => {
+    expect(() => guard.confineNew("kit/a.stl", root)).toThrow(/absolute/i);
+  });
+
+  it("refuses a sibling directory with a matching prefix", () => {
+    expect(() => guard.confineNew(`${root}-backup/a.stl`, root)).toThrow();
+  });
+});
