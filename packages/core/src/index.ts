@@ -35,7 +35,6 @@ export {
   setPurpose,
   splitGroup,
 } from "./planEditor.js";
-export { NodeFileSystem } from "./nodeFileSystem.js";
 export {
   deriveMoves,
   folderFor,

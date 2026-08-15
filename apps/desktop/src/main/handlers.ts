@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 import {
   apply,
   Journal,
-  NodeFileSystem,
   plan,
   posixPath,
   undo,
@@ -11,6 +10,7 @@ import {
   type SortPlan,
   type UndoResult,
 } from "@stl-manager/core";
+import { NodeFileSystem } from "@stl-manager/core/node";
 import electron, { type IpcMainInvokeEvent } from "electron";
 import {
   applyPlanRequestSchema,
