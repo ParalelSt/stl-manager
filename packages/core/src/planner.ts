@@ -55,6 +55,8 @@ export interface GroupPlan {
 /** A complete proposal, ready to be reviewed and edited. */
 export interface PlanModel {
   libraryRoot: string;
+  /** The folders that were scanned, used to keep quarantine paths short. */
+  scanRoots: string[];
   groups: GroupPlan[];
   /** Companions and other files deliberately left where they are. */
   untouched: ScannedFile[];
@@ -101,6 +103,31 @@ class DestinationRegistry {
       }
     }
   }
+}
+
+/**
+ * Returns a path relative to whichever scan root contains it.
+ *
+ * Quarantined copies mirror where they came from, but mirroring an absolute
+ * path buries every file under the whole of /Users/someone/Downloads. Relative
+ * to the folder the user actually chose to scan, the origin is still obvious
+ * and the tree stays readable.
+ */
+function relativeToRoot(filePath: string, scanRoots: string[], path: PathUtil): string[] {
+  const segments = path.segments(filePath);
+  let best: string[] | undefined;
+  for (const root of scanRoots) {
+    const rootSegments = path.segments(root);
+    const isInside = rootSegments.every((segment, index) => segments[index] === segment);
+    if (!isInside) {
+      continue;
+    }
+    const remainder = segments.slice(rootSegments.length);
+    if (best === undefined || remainder.length < best.length) {
+      best = remainder;
+    }
+  }
+  return best ?? segments;
 }
 
 /**
@@ -164,7 +191,7 @@ export function deriveMoves(model: PlanModel, path: PathUtil): PlannedMove[] {
       const mirrored = path.join(
         model.libraryRoot,
         QUARANTINE_FOLDER,
-        ...path.segments(copy.path),
+        ...relativeToRoot(copy.path, model.scanRoots, path),
       );
       moves.push({
         from: copy.path,
@@ -280,6 +307,7 @@ export async function plan(options: PlanOptions): Promise<SortPlan> {
 
   const model: PlanModel = {
     libraryRoot,
+    scanRoots: roots,
     groups,
     untouched: assignment.untouched,
     problems: scanned.problems,

@@ -10,6 +10,7 @@ export const SCREEN = {
   REVIEW: "review",
   APPLY: "apply",
   HISTORY: "history",
+  LIBRARY: "library",
 } as const;
 
 /** One of the application's screens. */

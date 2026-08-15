@@ -15,6 +15,7 @@ export function ApplyScreen() {
     start,
     back,
     viewHistory,
+    viewLibrary,
   } = useApply();
 
   const errorNote =
@@ -52,10 +53,11 @@ export function ApplyScreen() {
             Every move was recorded. If this is not what you wanted, the whole run can be reversed
             from the history screen.
           </p>
-          <div className="mt-8">
-            <Button tone={BUTTON_TONE.PRIMARY} onClick={viewHistory}>
-              View history
+          <div className="mt-8 flex gap-4">
+            <Button tone={BUTTON_TONE.PRIMARY} onClick={viewLibrary}>
+              Browse the library
             </Button>
+            <Button onClick={viewHistory}>View history</Button>
           </div>
         </div>
       );

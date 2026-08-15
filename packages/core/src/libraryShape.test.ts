@@ -40,8 +40,8 @@ describe("the resulting library", () => {
       // The winner is stored under the clean name, not "ruined_tower (1).stl".
       "/lib/Terrain Pack 3/ruined_tower/ruined_tower.stl",
       // Byte-identical copies are quarantined under their original path.
-      "/lib/_Duplicates/home/Downloads/Terrain Pack 3/ruined_tower.stl",
-      "/lib/_Duplicates/home/Models/space_marine.stl",
+      "/lib/_Duplicates/Downloads/Terrain Pack 3/ruined_tower.stl",
+      "/lib/_Duplicates/Models/space_marine.stl",
       // Two directories each held one model, so neither becomes a purpose.
       "/lib/space_marine/space_marine.jpg",
       "/lib/space_marine/space_marine.stl",

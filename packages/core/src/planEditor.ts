@@ -1,3 +1,4 @@
+import { toNameKey } from "./nameKey.js";
 import type { GroupPlan, PlanModel } from "./planner.js";
 import type { ScannedFile } from "./types.js";
 
@@ -175,5 +176,100 @@ export function splitGroup(model: PlanModel, groupId: string): PlanModel {
   return {
     ...model,
     groups: model.groups.flatMap((entry) => (entry.id === groupId ? pieces : [entry])),
+  };
+}
+
+function partitionByModel(
+  files: ScannedFile[],
+  nameKey: string,
+): { matching: ScannedFile[]; rest: ScannedFile[] } {
+  const matching: ScannedFile[] = [];
+  const rest: ScannedFile[] = [];
+  for (const file of files) {
+    if (toNameKey(file.stem) === nameKey) {
+      matching.push(file);
+    } else {
+      rest.push(file);
+    }
+  }
+  return { matching, rest };
+}
+
+function isEmpty(group: GroupPlan): boolean {
+  return (
+    group.kept.length === 0 && group.duplicates.length === 0 && group.companions.length === 0
+  );
+}
+
+/**
+ * Moves one model, with every file belonging to it, into another family.
+ *
+ * A model is identified by its normalised name rather than by a single file,
+ * because one model is usually several files: a mesh, its slicer file and its
+ * preview all travel together. Moving only the file the user dragged would
+ * split them.
+ *
+ * A family left with nothing is removed, since an empty folder in the library
+ * would be meaningless.
+ *
+ * @param model - The plan as it currently stands
+ * @param nameKey - The normalised name of the model to move
+ * @param targetGroupId - The family it should join
+ * @returns A new model, or the original when the move is not possible
+ */
+export function moveModelToGroup(
+  model: PlanModel,
+  nameKey: string,
+  targetGroupId: string,
+): PlanModel {
+  const target = model.groups.find((group) => group.id === targetGroupId);
+  if (target === undefined) {
+    return model;
+  }
+
+  const moved = { kept: [] as ScannedFile[], duplicates: [] as ScannedFile[], companions: [] as ScannedFile[] };
+  const stripped: GroupPlan[] = [];
+
+  for (const group of model.groups) {
+    if (group.id === targetGroupId) {
+      stripped.push(group);
+      continue;
+    }
+    const kept = partitionByModel(group.kept, nameKey);
+    const duplicates = partitionByModel(group.duplicates, nameKey);
+    const companions = partitionByModel(group.companions, nameKey);
+
+    moved.kept.push(...kept.matching);
+    moved.duplicates.push(...duplicates.matching);
+    moved.companions.push(...companions.matching);
+
+    stripped.push({
+      ...group,
+      kept: kept.rest,
+      duplicates: duplicates.rest,
+      companions: companions.rest,
+    });
+  }
+
+  const hasAnything =
+    moved.kept.length > 0 || moved.duplicates.length > 0 || moved.companions.length > 0;
+  if (!hasAnything) {
+    return model;
+  }
+
+  return {
+    ...model,
+    groups: stripped
+      .map((group) =>
+        group.id === targetGroupId
+          ? {
+              ...group,
+              kept: [...group.kept, ...moved.kept],
+              duplicates: [...group.duplicates, ...moved.duplicates],
+              companions: [...group.companions, ...moved.companions],
+            }
+          : group,
+      )
+      .filter((group) => group.id === targetGroupId || !isEmpty(group)),
   };
 }

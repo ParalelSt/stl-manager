@@ -1,9 +1,17 @@
-import type { ApplyResult, RunSummary, SortPlan, UndoResult } from "@stl-manager/core";
+import type {
+  ApplyResult,
+  RunSummary,
+  SortPlan,
+  TreeFolder,
+  UndoResult,
+} from "@stl-manager/core";
 import type {
   ApplyPlanRequest,
   BuildPlanRequest,
   ListRunsRequest,
   ProgressEvent,
+  ReadLibraryRequest,
+  RevealRequest,
   UndoRunRequest,
 } from "@shared/ipc.js";
 
@@ -30,6 +38,8 @@ export interface StlManagerApi {
   applyPlan(request: ApplyPlanRequest): Promise<OperationResult<AppliedRun>>;
   listRuns(request: ListRunsRequest): Promise<OperationResult<RunSummary[]>>;
   undoRun(request: UndoRunRequest): Promise<OperationResult<UndoResult>>;
+  readLibrary(request: ReadLibraryRequest): Promise<OperationResult<TreeFolder>>;
+  revealInFinder(request: RevealRequest): Promise<OperationResult<undefined>>;
   /** Subscribes to progress events. Returns a function that unsubscribes. */
   onProgress(handler: (progress: ProgressEvent) => void): () => void;
 }

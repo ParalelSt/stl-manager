@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isValidGroupName,
   mergeGroups,
+  moveModelToGroup,
   renameGroup,
   setExcluded,
   setPurpose,
@@ -42,7 +43,7 @@ function group(id: string, overrides: Partial<GroupPlan> = {}): GroupPlan {
 }
 
 function model(groups: GroupPlan[]): PlanModel {
-  return { libraryRoot: "/lib", groups, untouched: [], problems: [] };
+  return { libraryRoot: "/lib", scanRoots: ["/home"], groups, untouched: [], problems: [] };
 }
 
 function destinations(edited: PlanModel): string[] {
@@ -235,5 +236,69 @@ describe("editing in sequence", () => {
     // Both folders are called Same, and the files keep their own names, so
     // they simply share the folder rather than colliding.
     expect(destinations(edited).sort()).toEqual(["/lib/Same/a.stl", "/lib/Same/b.stl"]);
+  });
+});
+
+describe("moveModelToGroup", () => {
+  it("moves a model into another family, alongside what is already there", () => {
+    const edited = moveModelToGroup(model([group("kit"), group("tower")]), "tower", "kit");
+    expect(destinations(edited).sort()).toEqual(["/lib/kit/kit.stl", "/lib/kit/tower.stl"]);
+  });
+
+  it("removes a family left with nothing", () => {
+    const edited = moveModelToGroup(model([group("kit"), group("tower")]), "tower", "kit");
+    expect(edited.groups.map((entry) => entry.id)).toEqual(["kit"]);
+  });
+
+  it("keeps a family that still has other models", () => {
+    const source = group("pair", {
+      kept: [file("/home/M/pair_a.stl"), file("/home/M/pair_b.stl")],
+    });
+    const edited = moveModelToGroup(model([group("kit"), source]), "pair a", "kit");
+    expect(edited.groups.map((entry) => entry.id).sort()).toEqual(["kit", "pair"]);
+  });
+
+  it("takes every file belonging to the model, not just the mesh", () => {
+    const source = group("tower", {
+      kept: [file("/home/M/tower.stl")],
+      companions: [file("/home/M/tower.jpg", ".jpg")],
+      duplicates: [file("/home/M/tower (1).stl")],
+    });
+    const edited = moveModelToGroup(model([group("kit"), source]), "tower", "kit");
+    const kit = edited.groups.find((entry) => entry.id === "kit");
+    expect(kit?.kept).toHaveLength(2);
+    expect(kit?.companions).toHaveLength(1);
+    expect(kit?.duplicates).toHaveLength(1);
+  });
+
+  it("loses no files at all", () => {
+    const before = model([
+      group("kit", { kept: [file("/home/M/kit_base.stl")] }),
+      group("tower", { kept: [file("/home/M/tower.stl")] }),
+    ]);
+    const after = moveModelToGroup(before, "tower", "kit");
+    const count = (entry: PlanModel) =>
+      entry.groups.reduce((total, g) => total + g.kept.length + g.companions.length + g.duplicates.length, 0);
+    expect(count(after)).toBe(count(before));
+  });
+
+  it("leaves the model untouched when the target is unknown", () => {
+    const original = model([group("kit"), group("tower")]);
+    expect(moveModelToGroup(original, "tower", "nope")).toBe(original);
+  });
+
+  it("leaves the model untouched when the model is unknown", () => {
+    const original = model([group("kit"), group("tower")]);
+    expect(moveModelToGroup(original, "nothing", "kit")).toBe(original);
+  });
+
+  it("never produces two files on one path", () => {
+    const edited = moveModelToGroup(
+      model([group("kit"), group("tower", { kept: [file("/home/M/tower.stl")] })]),
+      "tower",
+      "kit",
+    );
+    const paths = destinations(edited);
+    expect(new Set(paths).size).toBe(paths.length);
   });
 });

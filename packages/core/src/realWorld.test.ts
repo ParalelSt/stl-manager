@@ -94,6 +94,9 @@ describe("a realistic collection", () => {
     expect(applied.skipped).toBe(0);
 
     const quarantined = (await libraryTree()).filter((path) => path.startsWith("_Duplicates"));
+    // Quarantine mirrors the path relative to the scanned folder, not from the
+    // filesystem root, so the tree stays shallow.
+    expect(quarantined.every((path) => !path.includes("/Users/"))).toBe(true);
     const sortedFiles = (await libraryTree()).filter((path) => !path.startsWith("_Duplicates"));
 
     expect(sortedFiles).toEqual([
