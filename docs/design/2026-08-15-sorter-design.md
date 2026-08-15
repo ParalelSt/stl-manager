@@ -243,9 +243,17 @@ Before the first write:
 
 ### Execution
 
-Operations run sequentially. A move within a volume is a rename. A move across
-volumes is copy, verify, then unlink, in that order, so the source is never
-removed before the copy is confirmed.
+Operations run sequentially. Each is attempted as a rename first. When the
+filesystem refuses because the destination is on another volume, the operation
+falls back to copy, verify the copied size, then unlink, in that order, so the
+source is never removed before the copy is confirmed. Any other rename failure
+is recorded rather than retried, since it means something is wrong beyond the
+move itself.
+
+The fallback is driven by what the filesystem reports rather than by comparing
+device identifiers beforehand. The operating system is the authority on whether
+a rename can cross a given boundary, and asking it costs nothing extra in the
+common case where the rename simply succeeds.
 
 A file that fails does not abort the run. The failure is recorded and execution
 continues. One unreadable file must not stop ten thousand moves.

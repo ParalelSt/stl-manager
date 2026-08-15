@@ -38,3 +38,6 @@ coverage/
 
 # Runtime data written by the app during development
 .stl-manager/
+
+# Electron build output
+apps/desktop/out/
