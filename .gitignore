@@ -1,0 +1,40 @@
+# Personal specs and plans are never committed.
+# Any markdown file whose name contains "spec" or "plan" is excluded.
+*spec*.md
+*Spec*.md
+*SPEC*.md
+*plan*.md
+*Plan*.md
+*PLAN*.md
+
+# Local rules directory
+Claude rules/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out/
+build/
+*.tsbuildinfo
+
+# Electron packaging
+release/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Editor and OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Test and coverage
+coverage/
+
+# Runtime data written by the app during development
+.stl-manager/
