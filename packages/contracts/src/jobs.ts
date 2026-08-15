@@ -1,3 +1,5 @@
+import type { ProgressEvent } from "./schemas.js";
+
 /** What a job is doing. */
 export const JOB_KIND = {
   SCAN: "scan",
@@ -37,6 +39,14 @@ export interface JobEnvelope<Result> {
   finishedAt: number | undefined;
   result: Result | undefined;
   error: string | undefined;
+  /**
+   * The most recent progress report.
+   *
+   * Carried here as well as on the event stream so that a client which simply
+   * polls still shows progress, without needing to authenticate a second
+   * connection.
+   */
+  progress: ProgressEvent | undefined;
 }
 
 /** The response to starting a job. */

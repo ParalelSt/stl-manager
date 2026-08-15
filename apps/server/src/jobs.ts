@@ -82,12 +82,14 @@ export function createJobRegistry(options: JobRegistryOptions = {}): JobRegistry
           finishedAt: undefined,
           result: undefined,
           error: undefined,
+          progress: undefined,
         },
         listeners: new Set(),
       };
       jobs.set(id, record);
 
       const report: ProgressListener = (progress) => {
+        record.envelope.progress = progress;
         for (const listener of record.listeners) {
           try {
             listener(progress);

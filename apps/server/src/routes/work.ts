@@ -12,6 +12,7 @@ import {
   apply,
   Journal,
   plan,
+  readLibraryTree,
   undo,
   type FileSystem,
   type PathUtil,
@@ -193,6 +194,19 @@ export function workRoutes(options: WorkOptions): Hono {
       const libraryRoot = await guard.resolve(requested);
       const journal = new Journal(fs, path, libraryRoot);
       return context.json({ ok: true, value: await journal.listRuns() });
+    } catch (error) {
+      return context.json({ ok: false, error: describeError(error) }, 400);
+    }
+  });
+
+  routes.get("/library", async (context) => {
+    const requested = context.req.query("libraryRoot");
+    if (requested === undefined || requested === "") {
+      return context.json({ ok: false, error: "A libraryRoot is required." }, 400);
+    }
+    try {
+      const libraryRoot = await guard.resolve(requested);
+      return context.json({ ok: true, value: await readLibraryTree(fs, path, libraryRoot) });
     } catch (error) {
       return context.json({ ok: false, error: describeError(error) }, 400);
     }

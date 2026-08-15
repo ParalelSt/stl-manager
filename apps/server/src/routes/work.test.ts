@@ -186,4 +186,25 @@ describe("work routes", () => {
       expect(text).toContain("event: done");
     });
   });
+  describe("GET /api/library", () => {
+  it("reads the library from disk", async () => {
+    const moves = [
+      { from: join(source, "kit_base.stl"), to: join(library, "kit", "kit_base.stl"), groupId: "kit", reason: "model" as const, size: 9 },
+    ];
+    const started = await (await post("/api/applies", { libraryRoot: library, moves })).json();
+    await settleJob(started.value.jobId);
+
+    const body = await (await get(`/api/library?libraryRoot=${encodeURIComponent(library)}`)).json();
+    expect(body.value.fileCount).toBe(1);
+    expect(body.value.children[0].name).toBe("kit");
+  });
+
+  it("refuses a library outside the roots", async () => {
+    expect((await get(`/api/library?libraryRoot=${encodeURIComponent(outside)}`)).status).toBe(400);
+  });
+
+  it("refuses a missing libraryRoot", async () => {
+    expect((await get("/api/library")).status).toBe(400);
+  });
+});
 });
