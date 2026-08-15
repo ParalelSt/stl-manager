@@ -64,6 +64,10 @@ export function useApply() {
     goTo(SCREEN.HISTORY);
   }, [goTo]);
 
+  const viewLibrary = useCallback(() => {
+    goTo(SCREEN.LIBRARY);
+  }, [goTo]);
+
   return {
     moves,
     progress,
@@ -75,5 +79,6 @@ export function useApply() {
     start,
     back,
     viewHistory,
+    viewLibrary,
   };
 }

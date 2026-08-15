@@ -17,12 +17,21 @@ import electron from "electron";
 const { app, BrowserWindow } = electron;
 const here = import.meta.dirname;
 
+/**
+ * The exact capabilities the renderer is given.
+ *
+ * Deliberately an exact list rather than a subset check, so that adding a way
+ * for the interface to reach the system is a decision someone has to make on
+ * purpose rather than something that arrives unnoticed.
+ */
 const EXPECTED_BRIDGE_METHODS = [
   "applyPlan",
   "buildPlan",
   "chooseDirectory",
   "listRuns",
   "onProgress",
+  "readLibrary",
+  "revealInFinder",
   "undoRun",
 ];
 

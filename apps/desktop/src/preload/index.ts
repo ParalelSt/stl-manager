@@ -19,6 +19,10 @@ const api = {
     ipcRenderer.invoke(IPC_CHANNEL.LIST_RUNS, request),
   undoRun: (request: unknown): Promise<unknown> =>
     ipcRenderer.invoke(IPC_CHANNEL.UNDO_RUN, request),
+  readLibrary: (request: unknown): Promise<unknown> =>
+    ipcRenderer.invoke(IPC_CHANNEL.READ_LIBRARY, request),
+  revealInFinder: (request: unknown): Promise<unknown> =>
+    ipcRenderer.invoke(IPC_CHANNEL.REVEAL_IN_FINDER, request),
   onProgress: (handler: (progress: ProgressEvent) => void): (() => void) => {
     const listener = (_event: unknown, progress: ProgressEvent): void => {
       handler(progress);

@@ -40,7 +40,7 @@ describe("plan", () => {
       "/home/M/tower (2).stl": { content: "same" },
     });
     expect(destinationFor(result, "/home/M/tower.stl")).toBe(
-      "/lib/_Duplicates/home/M/tower.stl",
+      "/lib/_Duplicates/M/tower.stl",
     );
     expect(destinationFor(result, "/home/M/tower (2).stl")).toBe("/lib/tower/tower.stl");
   });
@@ -80,7 +80,7 @@ describe("plan", () => {
       "/home/M/tower (2).stl": { content: "same" },
     });
     expect(destinationFor(result, "/home/M/tower.stl")).toBe(
-      "/lib/_Duplicates/home/M/tower.stl",
+      "/lib/_Duplicates/M/tower.stl",
     );
   });
 

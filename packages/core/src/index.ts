@@ -18,6 +18,14 @@ export {
 export type { DirEntry, FileStat, FileSystem, PathUtil } from "./fileSystem.js";
 export { group, type FileGroup } from "./grouper.js";
 export {
+  buildLibraryTree,
+  type ExcludedGroup,
+  type LibraryTree,
+  type TreeFile,
+  type TreeFolder,
+  type TreeNode,
+} from "./libraryTree.js";
+export {
   Journal,
   JOURNAL_FILENAME,
   OPERATION_OUTCOME,
@@ -30,6 +38,7 @@ export { parseDuplicateIndex, toNameKey } from "./nameKey.js";
 export {
   isValidGroupName,
   mergeGroups,
+  moveModelToGroup,
   renameGroup,
   setExcluded,
   setPurpose,
@@ -49,6 +58,7 @@ export {
   type SortPlan,
 } from "./planner.js";
 export { posixPath } from "./posixPath.js";
+export { readLibraryTree } from "./readLibraryTree.js";
 export { scan, type ScanOptions, type ScanResult } from "./scanner.js";
 export {
   FILE_KIND,

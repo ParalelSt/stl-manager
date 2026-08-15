@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button, BUTTON_TONE } from "../components/Button.js";
-import { GroupRow } from "../components/GroupRow.js";
+import { LibraryTree } from "../components/LibraryTree.js";
 import { WarningIcon } from "../components/icons/WarningIcon.js";
 import { useReview } from "../hooks/useReview.js";
 import { formatBytes, plural, wasWere } from "../text.js";
@@ -9,28 +9,23 @@ export function ReviewScreen() {
   const {
     plan,
     groups,
+    tree,
     summary,
-    isNameValid,
     rename,
-    changePurpose,
     toggleExcluded,
-    split,
+    moveModel,
     back,
     proceed,
   } = useReview();
 
   const [filter, setFilter] = useState("");
 
-  const visible = useMemo(() => {
+  const matches = useMemo(() => {
     const needle = filter.trim().toLowerCase();
     if (needle === "") {
-      return groups;
+      return undefined;
     }
-    return groups.filter(
-      (group) =>
-        group.displayName.toLowerCase().includes(needle) ||
-        (group.purpose ?? "").toLowerCase().includes(needle),
-    );
+    return groups.filter((group) => group.displayName.toLowerCase().includes(needle));
   }, [filter, groups]);
 
   if (plan === undefined) {
@@ -63,9 +58,45 @@ export function ReviewScreen() {
       </p>
     );
 
-  const emptyNote =
-    visible.length > 0 ? null : (
-      <p className="text-muted py-16 text-center text-sm">Nothing matches that filter.</p>
+  const filterNote =
+    matches === undefined ? null : (
+      <p className="text-muted mt-3 text-sm">
+        {plural(matches.length, "folder")} match that filter.
+      </p>
+    );
+
+  const treeView =
+    tree === undefined ? null : (
+      <LibraryTree
+        root={tree.root}
+        isEditable={true}
+        onRename={rename}
+        onMoveModel={moveModel}
+      />
+    );
+
+  const excludedNote =
+    tree === undefined || tree.excluded.length === 0 ? null : (
+      <div className="mt-8">
+        <h3 className="text-muted text-xs tracking-wide uppercase">Left alone</h3>
+        <ul className="mt-3 space-y-2">
+          {tree.excluded.map((entry) => (
+            <li key={entry.groupId} className="flex items-center justify-between gap-6 text-sm">
+              <span className="text-muted">
+                {entry.displayName} · {plural(entry.fileCount, "file")}
+              </span>
+              <Button
+                tone={BUTTON_TONE.QUIET}
+                onClick={() => {
+                  toggleExcluded(entry.groupId, false);
+                }}
+              >
+                Include again
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </div>
     );
 
   return (
@@ -75,7 +106,8 @@ export function ReviewScreen() {
           <p className="text-muted text-xs tracking-[0.2em] uppercase">Step three</p>
           <h1 className="font-serif mt-3 text-5xl leading-tight">Check the plan</h1>
           <p className="text-muted mt-4 max-w-prose">
-            Rename a group, give it a parent folder, or leave it out. Still nothing has moved.
+            This is the library you would end up with. Rename a folder, drag a model into a
+            different one, or leave a folder out. Still nothing has moved.
           </p>
           {problems}
           {untouched}
@@ -106,34 +138,17 @@ export function ReviewScreen() {
       <section className="mt-16">
         <input
           value={filter}
-          placeholder="Filter groups"
-          aria-label="Filter groups"
+          placeholder="Filter folders"
+          aria-label="Filter folders"
           onChange={(event) => {
             setFilter(event.target.value);
           }}
           className="border-border focus:border-accent placeholder:text-muted w-72 border-b bg-transparent pb-2 text-sm focus:outline-none"
         />
+        {filterNote}
 
-        <div className="text-muted border-border mt-10 hidden grid-cols-12 gap-x-6 border-b pb-3 text-xs tracking-wide uppercase md:grid">
-          <span className="col-span-5 pl-7">Group</span>
-          <span className="col-span-4">Parent folder</span>
-          <span className="col-span-3 text-right">Files</span>
-        </div>
-
-        <ul>
-          {visible.map((group) => (
-            <GroupRow
-              key={group.id}
-              group={group}
-              isNameValid={isNameValid}
-              onRename={rename}
-              onChangePurpose={changePurpose}
-              onToggleExcluded={toggleExcluded}
-              onSplit={split}
-            />
-          ))}
-        </ul>
-        {emptyNote}
+        <div className="mt-10">{treeView}</div>
+        {excludedNote}
       </section>
 
       <footer className="border-border bg-background fixed inset-x-0 bottom-0 border-t">

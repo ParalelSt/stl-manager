@@ -78,7 +78,7 @@ describe("the whole pipeline", () => {
         "Terrain Pack/wall/wall.stl",
         // "tower (1).stl" carries the higher duplicate index, so it wins and is
         // stored under the clean name. The original loses and is quarantined.
-        "_Duplicates/" + join(source, "Terrain Pack").slice(1) + "/tower.stl",
+        "_Duplicates/Terrain Pack/tower.stl",
         "hero/hero.stl",
       ].sort(),
     );

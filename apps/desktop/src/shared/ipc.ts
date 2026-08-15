@@ -13,6 +13,8 @@ export const IPC_CHANNEL = {
   APPLY_PLAN: "applyPlan",
   LIST_RUNS: "listRuns",
   UNDO_RUN: "undoRun",
+  READ_LIBRARY: "readLibrary",
+  REVEAL_IN_FINDER: "revealInFinder",
   PROGRESS: "progress",
 } as const;
 
@@ -105,3 +107,19 @@ export function parseRequest<Output>(
   const message = first?.message ?? "The request was not valid.";
   return { ok: false, error: path === "" ? message : `${path}: ${message}` };
 }
+
+/** A request to read an existing library from disk. */
+export const readLibraryRequestSchema = z.object({
+  libraryRoot: z.string().min(1),
+});
+
+/** Validated shape of a library read request. */
+export type ReadLibraryRequest = z.infer<typeof readLibraryRequestSchema>;
+
+/** A request to show a path in the system file browser. */
+export const revealRequestSchema = z.object({
+  path: z.string().min(1),
+});
+
+/** Validated shape of a reveal request. */
+export type RevealRequest = z.infer<typeof revealRequestSchema>;

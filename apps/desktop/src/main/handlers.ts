@@ -4,10 +4,12 @@ import {
   Journal,
   plan,
   posixPath,
+  readLibraryTree,
   undo,
   type ApplyResult,
   type RunSummary,
   type SortPlan,
+  type TreeFolder,
   type UndoResult,
 } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -19,11 +21,13 @@ import {
   listRunsRequestSchema,
   parseRequest,
   PROGRESS_KIND,
+  readLibraryRequestSchema,
+  revealRequestSchema,
   undoRunRequestSchema,
   type ProgressEvent,
 } from "../shared/ipc.js";
 
-const { dialog, ipcMain } = electron;
+const { dialog, ipcMain, shell } = electron;
 
 const fs = new NodeFileSystem();
 
@@ -115,7 +119,9 @@ export function registerHandlers(): void {
         const result = await apply({
           fs,
           path: posixPath,
-          plan: { libraryRoot, moves, groups: [], untouched: [], problems: [] },
+          // Applying needs only the moves; the scan roots mattered when the
+          // destinations were derived, which has already happened.
+          plan: { libraryRoot, scanRoots: [], moves, groups: [], untouched: [], problems: [] },
           journal: new Journal(fs, posixPath, libraryRoot),
           runId,
           onProgress: (done, total, currentPath) => {
@@ -143,6 +149,33 @@ export function registerHandlers(): void {
       } catch (error) {
         return { ok: false, error: describeError(error) };
       }
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNEL.READ_LIBRARY,
+    async (_event, request: unknown): Promise<OperationResult<TreeFolder>> => {
+      const parsed = parseRequest(readLibraryRequestSchema, request);
+      if (!parsed.ok) {
+        return parsed;
+      }
+      try {
+        return { ok: true, value: await readLibraryTree(fs, posixPath, parsed.value.libraryRoot) };
+      } catch (error) {
+        return { ok: false, error: describeError(error) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNEL.REVEAL_IN_FINDER,
+    async (_event, request: unknown): Promise<OperationResult<undefined>> => {
+      const parsed = parseRequest(revealRequestSchema, request);
+      if (!parsed.ok) {
+        return parsed;
+      }
+      shell.showItemInFolder(parsed.value.path);
+      return { ok: true, value: undefined };
     },
   );
 

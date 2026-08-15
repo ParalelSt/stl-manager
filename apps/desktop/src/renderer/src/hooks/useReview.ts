@@ -1,5 +1,7 @@
 import {
+  buildLibraryTree,
   deriveMoves,
+  moveModelToGroup,
   isValidGroupName,
   mergeGroups,
   posixPath,
@@ -53,6 +55,11 @@ export function useReview() {
 
   const moves = useMemo(
     () => (plan === undefined ? [] : deriveMoves(plan, posixPath)),
+    [plan],
+  );
+
+  const tree = useMemo(
+    () => (plan === undefined ? undefined : buildLibraryTree(plan, posixPath)),
     [plan],
   );
 
@@ -122,6 +129,13 @@ export function useReview() {
     [edit],
   );
 
+  const moveModel = useCallback(
+    (nameKey: string, targetGroupId: string) => {
+      edit((model) => moveModelToGroup(model, nameKey, targetGroupId));
+    },
+    [edit],
+  );
+
   const back = useCallback(() => {
     goTo(SCREEN.SETUP);
   }, [goTo]);
@@ -134,6 +148,7 @@ export function useReview() {
     plan,
     groups,
     moves,
+    tree,
     summary,
     isNameValid: isValidGroupName,
     rename,
@@ -141,6 +156,7 @@ export function useReview() {
     toggleExcluded,
     merge,
     split,
+    moveModel,
     back,
     proceed,
   };
