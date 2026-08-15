@@ -1,6 +1,8 @@
 import type { FileSystem, PathUtil } from "@stl-manager/core";
 import { Hono } from "hono";
 import type { ServerConfig } from "./config.js";
+import { createPathGuard } from "./pathGuard.js";
+import { browseRoutes } from "./routes/browse.js";
 import { isTokenValid } from "./token.js";
 
 /** Everything the application needs, supplied rather than read from anywhere. */
@@ -51,15 +53,8 @@ export function createApp(options: AppOptions): Hono {
     return undefined;
   });
 
-  app.get(`${API_PREFIX}/roots`, (context) =>
-    context.json({
-      ok: true,
-      value: options.config.roots.map((root) => ({
-        path: root,
-        label: options.path.basename(root),
-      })),
-    }),
-  );
+  const guard = createPathGuard(options.config.roots);
+  app.route(API_PREFIX, browseRoutes({ guard, fs: options.fs, path: options.path }));
 
   return app;
 }
