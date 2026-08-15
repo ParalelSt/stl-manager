@@ -2,6 +2,7 @@ import { attachCompanions } from "./companions.js";
 import { resolveDuplicates } from "./duplicates.js";
 import type { FileSystem, PathUtil } from "./fileSystem.js";
 import { group } from "./grouper.js";
+import { toNameKey } from "./nameKey.js";
 import { scan } from "./scanner.js";
 import { FILE_KIND, type Problem, type ScannedFile } from "./types.js";
 
@@ -36,8 +37,7 @@ export interface PlannedMove {
  */
 export interface GroupPlan {
   id: string;
-  nameKey: string;
-  /** The folder name, and the filename models are stored under. */
+  /** The folder name for the family. */
   displayName: string;
   /** The shared parent folder, or undefined when the group stands alone. */
   purpose: string | undefined;
@@ -46,6 +46,8 @@ export interface GroupPlan {
   /** Files byte-identical to the winner, bound for the quarantine folder. */
   duplicates: ScannedFile[];
   companions: ScannedFile[];
+  /** True when the family was recognised by its numbering, not its words. */
+  isNumberedSet: boolean;
   /** Excluded groups stay where they are and produce no moves. */
   isExcluded: boolean;
 }
@@ -139,7 +141,7 @@ export function deriveMoves(model: PlanModel, path: PathUtil): PlannedMove[] {
     for (const file of group.kept) {
       moves.push({
         from: file.path,
-        to: destinations.claim(folder, group.displayName, file.ext),
+        to: destinations.claim(folder, cleanStem(file.stem), file.ext),
         groupId: group.id,
         reason: MOVE_REASON.MODEL,
         size: file.size,
@@ -175,6 +177,21 @@ export function deriveMoves(model: PlanModel, path: PathUtil): PlannedMove[] {
   }
 
   return moves;
+}
+
+/**
+ * Strips a duplicate marker from a stem, keeping its original spelling.
+ *
+ * A file keeps its own name in the library. Only the folder is named after the
+ * family, because a family holds several distinct models: naming every file
+ * after the family would turn kit_base and kit_lip into two files both called
+ * kit.
+ */
+function cleanStem(stem: string): string {
+  const withoutMarker = stem
+    .replace(/\s*\(\s*\d+\s*\)\s*$/, "")
+    .replace(/[\s._-]*copy(?:\s+\d+)?\s*$/i, "");
+  return withoutMarker.trim() === "" ? stem.trim() : withoutMarker.trim();
 }
 
 /**
@@ -227,17 +244,33 @@ export async function plan(options: PlanOptions): Promise<SortPlan> {
     const kept: ScannedFile[] = [];
     const duplicates: ScannedFile[] = [];
 
-    for (const files of byExtension(current.files).values()) {
-      const resolution = await resolveDuplicates(files, fs);
-      kept.push(resolution.winner, ...resolution.divergent);
-      duplicates.push(...resolution.identical);
+    // Within a family the members are different models, so duplicates are
+    // resolved per model per extension. Comparing kit_base against kit_lip
+    // would be both meaningless and expensive.
+    const byModel = new Map<string, ScannedFile[]>();
+    for (const file of current.files) {
+      const key = toNameKey(file.stem);
+      const existing = byModel.get(key);
+      if (existing === undefined) {
+        byModel.set(key, [file]);
+        continue;
+      }
+      existing.push(file);
+    }
+
+    for (const modelFiles of byModel.values()) {
+      for (const files of byExtension(modelFiles).values()) {
+        const resolution = await resolveDuplicates(files, fs);
+        kept.push(resolution.winner, ...resolution.divergent);
+        duplicates.push(...resolution.identical);
+      }
     }
 
     groups.push({
       id: current.id,
-      nameKey: current.nameKey,
       displayName: current.displayName,
       purpose: current.purpose,
+      isNumberedSet: current.isNumberedSet,
       kept,
       duplicates,
       companions: assignment.attached.get(current.id) ?? [],

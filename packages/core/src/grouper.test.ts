@@ -66,7 +66,7 @@ describe("group", () => {
       ],
       posixPath,
     );
-    const tower = groups.find((entry) => entry.nameKey === "tower");
+    const tower = groups.find((entry) => entry.displayName === "tower");
     expect(tower?.purpose).toBeUndefined();
   });
 
@@ -81,7 +81,7 @@ describe("group", () => {
       ],
       posixPath,
     );
-    expect(groups.find((entry) => entry.nameKey === "tower")?.purpose).toBe("Terrain");
+    expect(groups.find((entry) => entry.displayName === "tower")?.purpose).toBe("Terrain");
   });
 
   it("breaks a purpose tie with the newest file", () => {
@@ -94,7 +94,7 @@ describe("group", () => {
       ],
       posixPath,
     );
-    expect(groups.find((entry) => entry.nameKey === "tower")?.purpose).toBe("New");
+    expect(groups.find((entry) => entry.displayName === "tower")?.purpose).toBe("New");
   });
 
   it("uses the most common original stem as the display name", () => {
@@ -127,5 +127,97 @@ describe("group", () => {
       posixPath,
     );
     expect(groups.map((entry) => entry.displayName)).toEqual(["alpha", "mid", "zeta"]);
+  });
+});
+
+
+describe("grouping into families", () => {
+  it("puts models sharing a first word in one folder", () => {
+    const groups = group(
+      [file("/home/M/kit_base.stl"), file("/home/M/kit_lip.stl"), file("/home/M/tower.stl")],
+      posixPath,
+    );
+    const kit = groups.find((entry) => entry.displayName === "kit");
+    expect(kit?.files).toHaveLength(2);
+  });
+
+  it("keeps distinct models inside one family rather than merging them", () => {
+    const groups = group(
+      [file("/home/M/kit_base.stl"), file("/home/M/kit_lip.stl")],
+      posixPath,
+    );
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.files.map((entry) => entry.stem).sort()).toEqual(["kit_base", "kit_lip"]);
+  });
+
+  it("recognises a numbered run as one set", () => {
+    const groups = group(
+      [
+        file("/home/Vacuum Kit/01_adapter.stl"),
+        file("/home/Vacuum Kit/02_pipe.stl"),
+        file("/home/Vacuum Kit/03_elbow.stl"),
+      ],
+      posixPath,
+    );
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.displayName).toBe("Vacuum Kit");
+    expect(groups[0]?.isNumberedSet).toBe(true);
+  });
+
+  it("does not make an uninformative folder name into a purpose", () => {
+    const groups = group(
+      [file("/home/Downloads/tower.stl"), file("/home/Downloads/wall.stl")],
+      posixPath,
+    );
+    expect(groups.every((entry) => entry.purpose === undefined)).toBe(true);
+  });
+
+  it("still uses an informative folder name as a purpose", () => {
+    const groups = group(
+      [file("/home/Terrain Pack/tower.stl"), file("/home/Terrain Pack/wall.stl")],
+      posixPath,
+    );
+    expect(groups.every((entry) => entry.purpose === "Terrain Pack")).toBe(true);
+  });
+
+  it("does not nest a numbered set inside a folder of the same name", () => {
+    const groups = group(
+      [
+        file("/home/Vacuum Kit/01_adapter.stl"),
+        file("/home/Vacuum Kit/02_pipe.stl"),
+        file("/home/Vacuum Kit/03_elbow.stl"),
+        file("/home/Vacuum Kit/spare_part.stl"),
+      ],
+      posixPath,
+    );
+    const set = groups.find((entry) => entry.isNumberedSet);
+    expect(set?.purpose).toBeUndefined();
+  });
+});
+
+describe("naming a numbered set", () => {
+  it("uses the folder name when it is informative", () => {
+    const groups = group(
+      [
+        file("/home/Vacuum Kit/01_adapter.stl"),
+        file("/home/Vacuum Kit/02_pipe.stl"),
+        file("/home/Vacuum Kit/03_elbow.stl"),
+      ],
+      posixPath,
+    );
+    expect(groups[0]?.displayName).toBe("Vacuum Kit");
+  });
+
+  it("says the set needs naming when the folder says nothing", () => {
+    const groups = group(
+      [
+        file("/home/Downloads/01_adapter.stl"),
+        file("/home/Downloads/02_pipe.stl"),
+        file("/home/Downloads/03_elbow.stl"),
+      ],
+      posixPath,
+    );
+    expect(groups[0]?.displayName).toBe("Numbered set");
+    expect(groups[0]?.isNumberedSet).toBe(true);
   });
 });
