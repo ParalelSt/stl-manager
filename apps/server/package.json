@@ -1,0 +1,19 @@
+{
+  "name": "@stl-manager/server",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.9",
+    "@stl-manager/contracts": "*",
+    "@stl-manager/core": "*",
+    "hono": "^4.10.6"
+  }
+}
