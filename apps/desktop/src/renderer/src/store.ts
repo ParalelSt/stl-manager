@@ -1,6 +1,6 @@
 import type { PlanModel, RunSummary } from "@stl-manager/core";
 import { create } from "zustand";
-import type { ProgressEvent } from "@shared/ipc.js";
+import type { ProgressEvent } from "@stl-manager/contracts";
 import type { AppliedRun } from "./bridge.js";
 
 /** The screens the application moves between. */

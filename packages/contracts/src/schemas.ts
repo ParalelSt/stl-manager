@@ -15,6 +15,8 @@ export const IPC_CHANNEL = {
   UNDO_RUN: "undoRun",
   READ_LIBRARY: "readLibrary",
   REVEAL_IN_FINDER: "revealInFinder",
+  LIST_ROOTS: "listRoots",
+  LIST_DIRECTORIES: "listDirectories",
   PROGRESS: "progress",
 } as const;
 
@@ -123,3 +125,36 @@ export const revealRequestSchema = z.object({
 
 /** Validated shape of a reveal request. */
 export type RevealRequest = z.infer<typeof revealRequestSchema>;
+
+/** A mounted volume, or a starting point, the server is permitted to read. */
+export interface RootInfo {
+  /** The path as the server sees it, for example "/data/models". */
+  path: string;
+  /** A short label for the interface, derived from the last path segment. */
+  label: string;
+}
+
+/** One subdirectory returned by the directory browser. */
+export interface DirectoryEntry {
+  name: string;
+  path: string;
+}
+
+/** A request to list the subdirectories of a path. */
+export const listDirectoriesRequestSchema = z.object({
+  path: z.string().min(1),
+});
+
+/** Validated shape of a directory listing request. */
+export type ListDirectoriesRequest = z.infer<typeof listDirectoriesRequestSchema>;
+
+/**
+ * The result of an operation, carrying either a value or a reason it failed.
+ *
+ * Operations do not throw across a transport boundary: an unhandled rejection
+ * loses the message over IPC, and becomes an opaque 500 over HTTP. Returning
+ * the reason means the interface can always say what went wrong.
+ */
+export type OperationResult<Value> =
+  | { ok: true; value: Value }
+  | { ok: false; error: string };

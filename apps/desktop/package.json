@@ -13,7 +13,8 @@
     "smoke": "env -u ELECTRON_RUN_AS_NODE electron scripts/smokeTest.mjs"
   },
   "dependencies": {
-    "@stl-manager/core": "*"
+    "@stl-manager/core": "*",
+    "@stl-manager/contracts": "*"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

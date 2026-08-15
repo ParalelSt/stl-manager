@@ -12,11 +12,6 @@ export default defineConfig({
   },
   renderer: {
     root: resolve(import.meta.dirname, "src/renderer"),
-    resolve: {
-      alias: {
-        "@shared": resolve(import.meta.dirname, "src/shared"),
-      },
-    },
     build: {
       rollupOptions: {
         input: resolve(import.meta.dirname, "src/renderer/index.html"),

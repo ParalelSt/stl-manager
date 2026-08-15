@@ -9,16 +9,12 @@ import type {
   ApplyPlanRequest,
   BuildPlanRequest,
   ListRunsRequest,
+  OperationResult,
   ProgressEvent,
   ReadLibraryRequest,
   RevealRequest,
   UndoRunRequest,
-} from "@shared/ipc.js";
-
-/** The result of an operation, carrying either a value or a reason it failed. */
-export type OperationResult<Value> =
-  | { ok: true; value: Value }
-  | { ok: false; error: string };
+} from "@stl-manager/contracts";
 
 /** An apply result, plus the run identifier undo will need. */
 export interface AppliedRun extends ApplyResult {

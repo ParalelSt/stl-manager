@@ -1,7 +1,7 @@
 import electron from "electron";
 
 const { contextBridge, ipcRenderer } = electron;
-import { IPC_CHANNEL, type ProgressEvent } from "../shared/ipc.js";
+import { IPC_CHANNEL, type ProgressEvent } from "@stl-manager/contracts";
 
 /**
  * The complete surface the renderer is given.

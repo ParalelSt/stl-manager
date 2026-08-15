@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   applyPlanRequestSchema,
   buildPlanRequestSchema,
+  listDirectoriesRequestSchema,
   parseRequest,
   undoRunRequestSchema,
-} from "./ipc.js";
+} from "./schemas.js";
 
 describe("parseRequest", () => {
   it("accepts a well formed plan request", () => {
@@ -94,5 +95,23 @@ describe("parseRequest", () => {
     if (result.ok) {
       expect(result.value).toEqual({ libraryRoot: "/lib", runId: "run-1" });
     }
+  });
+});
+
+describe("listDirectoriesRequestSchema", () => {
+  it("accepts an absolute path", () => {
+    expect(parseRequest(listDirectoriesRequestSchema, { path: "/data" }).ok).toBe(true);
+  });
+
+  it("rejects an empty path", () => {
+    expect(parseRequest(listDirectoriesRequestSchema, { path: "" }).ok).toBe(false);
+  });
+
+  it("rejects a missing path", () => {
+    expect(parseRequest(listDirectoriesRequestSchema, {}).ok).toBe(false);
+  });
+
+  it("rejects a path that is not a string", () => {
+    expect(parseRequest(listDirectoriesRequestSchema, { path: 42 }).ok).toBe(false);
   });
 });
