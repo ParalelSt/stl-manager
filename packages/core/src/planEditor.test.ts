@@ -30,12 +30,12 @@ function file(path: string, ext = ".stl"): ScannedFile {
 function group(id: string, overrides: Partial<GroupPlan> = {}): GroupPlan {
   return {
     id,
-    nameKey: id,
     displayName: id,
     purpose: undefined,
     kept: [file(`/home/M/${id}.stl`)],
     duplicates: [],
     companions: [],
+    isNumberedSet: false,
     isExcluded: false,
     ...overrides,
   };
@@ -71,14 +71,16 @@ describe("isValidGroupName", () => {
 });
 
 describe("renameGroup", () => {
-  it("changes every destination under the group", () => {
+  it("moves the folder, keeping each file's own name", () => {
+    // Renaming a family renames its folder. The models inside keep their own
+    // names, because a family holds several distinct models.
     const edited = renameGroup(model([group("tower")]), "tower", "Ruined Tower");
-    expect(destinations(edited)).toEqual(["/lib/Ruined Tower/Ruined Tower.stl"]);
+    expect(destinations(edited)).toEqual(["/lib/Ruined Tower/tower.stl"]);
   });
 
   it("trims the name it is given", () => {
     const edited = renameGroup(model([group("tower")]), "tower", "  Tower  ");
-    expect(destinations(edited)).toEqual(["/lib/Tower/Tower.stl"]);
+    expect(destinations(edited)).toEqual(["/lib/Tower/tower.stl"]);
   });
 
   it("leaves the model untouched when the name is unusable", () => {
@@ -137,12 +139,9 @@ describe("setExcluded", () => {
 });
 
 describe("mergeGroups", () => {
-  it("puts every file under the target group", () => {
+  it("puts every file under the target group, each keeping its name", () => {
     const edited = mergeGroups(model([group("tower"), group("wall")]), "wall", "tower");
-    expect(destinations(edited).sort()).toEqual([
-      "/lib/tower/tower (2).stl",
-      "/lib/tower/tower.stl",
-    ]);
+    expect(destinations(edited).sort()).toEqual(["/lib/tower/tower.stl", "/lib/tower/wall.stl"]);
   });
 
   it("leaves no trace of the absorbed group", () => {
@@ -233,9 +232,8 @@ describe("editing in sequence", () => {
     edited = renameGroup(edited, "a", "Same");
     edited = renameGroup(edited, "b", "Same");
 
-    expect(destinations(edited).sort()).toEqual([
-      "/lib/Same/Same (2).stl",
-      "/lib/Same/Same.stl",
-    ]);
+    // Both folders are called Same, and the files keep their own names, so
+    // they simply share the folder rather than colliding.
+    expect(destinations(edited).sort()).toEqual(["/lib/Same/a.stl", "/lib/Same/b.stl"]);
   });
 });

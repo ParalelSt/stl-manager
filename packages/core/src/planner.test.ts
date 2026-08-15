@@ -158,3 +158,34 @@ describe("plan", () => {
     expect(fs.snapshot()).toEqual(before);
   });
 });
+
+describe("naming files inside a family", () => {
+  it("keeps each model's own name rather than the family name", async () => {
+    const result = await buildPlan({
+      "/home/Set/kit_base.stl": { content: "base" },
+      "/home/Set/kit_lip.stl": { content: "lip" },
+    });
+    expect(result.moves.map((move) => move.to).sort()).toEqual([
+      "/lib/kit/kit_base.stl",
+      "/lib/kit/kit_lip.stl",
+    ]);
+  });
+
+  it("does not compare different models in a family as duplicates", async () => {
+    const result = await buildPlan({
+      "/home/Set/kit_base.stl": { content: "same" },
+      "/home/Set/kit_lip.stl": { content: "same" },
+    });
+    expect(result.moves.filter((move) => move.reason === "duplicate")).toEqual([]);
+    expect(result.moves).toHaveLength(2);
+  });
+
+  it("still quarantines a real duplicate of one model in a family", async () => {
+    const result = await buildPlan({
+      "/home/Set/kit_base.stl": { content: "base" },
+      "/home/Set/kit_base (1).stl": { content: "base" },
+      "/home/Set/kit_lip.stl": { content: "lip" },
+    });
+    expect(result.moves.filter((move) => move.reason === "duplicate")).toHaveLength(1);
+  });
+});

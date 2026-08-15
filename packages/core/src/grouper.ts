@@ -1,30 +1,85 @@
+import { groupIntoFamilies, type FamilyCandidate } from "./families.js";
 import type { PathUtil } from "./fileSystem.js";
 import { toNameKey } from "./nameKey.js";
 import { FILE_KIND, type ScannedFile } from "./types.js";
 
 /**
- * A set of files that share a name and therefore share a folder.
+ * A family of related models, which share one folder in the library.
+ *
+ * A family usually holds several distinct models, not several copies of one:
+ * kit_base, kit_lip and kit_straight are one family and three models.
  */
 export interface FileGroup {
-  /** Stable identifier, equal to the name key. */
+  /** Stable identifier for the family. */
   id: string;
-  nameKey: string;
-  /** The name shown in the interface and used for the folder on disk. */
+  /** The folder name, and how the family is shown. */
   displayName: string;
-  /** The shared parent folder, or undefined when the group stands alone. */
+  /** The shared parent folder, or undefined when the family stands alone. */
   purpose: string | undefined;
+  /** True when the family was recognised by its numbering rather than its words. */
+  isNumberedSet: boolean;
   files: ScannedFile[];
 }
 
 /**
- * How many distinct models a directory must contribute before its name is
- * treated as a purpose.
+ * Folder names that describe where files landed rather than what they are.
  *
- * A directory holding one model is not a category, it is just where that model
- * happened to sit. Without this floor the library fills with parent folders
- * holding exactly one child.
+ * Turning one of these into a category produces a library sorted under a
+ * heading like "Downloads", which tells the user nothing they did not already
+ * know and buries the real structure a level deeper.
  */
-const MINIMUM_NAMES_FOR_PURPOSE = 2;
+const UNINFORMATIVE_FOLDER_NAMES: ReadonlySet<string> = new Set([
+  "downloads",
+  "download",
+  "desktop",
+  "documents",
+  "home",
+  "models",
+  "model",
+  "stl",
+  "stls",
+  "files",
+  "file",
+  "3d",
+  "3d models",
+  "3d prints",
+  "prints",
+  "print",
+  "printing",
+  "new folder",
+  "untitled",
+  "temp",
+  "tmp",
+  "misc",
+  "unsorted",
+  "archive",
+  "archives",
+  "extracted",
+  "zip",
+  "zips",
+  "shared",
+  "public",
+]);
+
+/**
+ * How many distinct families a folder must contribute before its name is
+ * treated as a purpose.
+ */
+const MINIMUM_FAMILIES_FOR_PURPOSE = 2;
+
+/**
+ * The name given to a numbered set whose folder name says nothing useful.
+ *
+ * A numbered set has no shared word to name itself with, so it borrows its
+ * folder's name. When that folder is called something like "Downloads" there
+ * is nothing to borrow, and the honest thing is to say so and let the user
+ * name it in review.
+ */
+const UNNAMED_NUMBERED_SET = "Numbered set";
+
+function newestTime(file: ScannedFile): number {
+  return file.birthtimeMs > 0 ? file.birthtimeMs : file.mtimeMs;
+}
 
 function mostCommon(values: string[]): string | undefined {
   const counts = new Map<string, number>();
@@ -42,38 +97,18 @@ function mostCommon(values: string[]): string | undefined {
   return best;
 }
 
-function newestTime(file: ScannedFile): number {
-  return file.birthtimeMs > 0 ? file.birthtimeMs : file.mtimeMs;
-}
-
 /**
- * Counts the distinct model names each directory contributed.
- *
- * Companions are ignored, so a readme sitting beside a single model cannot
- * turn its folder into a category.
+ * Removes a duplicate marker from a stem while keeping its original casing.
  */
-function countDistinctNamesPerDirectory(files: ScannedFile[]): Map<string, Set<string>> {
-  const perDirectory = new Map<string, Set<string>>();
-  for (const file of files) {
-    if (file.kind === FILE_KIND.COMPANION) {
-      continue;
-    }
-    const nameKey = toNameKey(file.stem);
-    if (nameKey === "") {
-      continue;
-    }
-    const existing = perDirectory.get(file.sourceDir);
-    if (existing === undefined) {
-      perDirectory.set(file.sourceDir, new Set([nameKey]));
-      continue;
-    }
-    existing.add(nameKey);
-  }
-  return perDirectory;
+function toDisplayStem(stem: string): string {
+  const withoutMarker = stem
+    .replace(/\s*\(\s*\d+\s*\)\s*$/, "")
+    .replace(/[\s._-]*copy(?:\s+\d+)?\s*$/i, "");
+  return withoutMarker.trim() === "" ? stem.trim() : withoutMarker.trim();
 }
 
 /**
- * Chooses the directory a group takes its purpose from.
+ * Chooses the directory a family takes its purpose from.
  *
  * The directory contributing the most files wins, with the newest file
  * breaking a tie.
@@ -104,20 +139,23 @@ function dominantDirectory(files: ScannedFile[]): string | undefined {
 }
 
 /**
- * Turns a scan inventory into groups of files that belong together.
+ * Turns a scan inventory into families of related models.
  *
- * Files sharing a normalised name share a group. A group is given a purpose,
- * meaning a shared parent folder, only when the directory its files mostly
- * came from contributed at least two distinct model names.
+ * Models whose names begin with the same word belong together, applied
+ * transitively so a whole family collects. Files numbered in a run within one
+ * folder are recognised as a set even though their names share nothing.
+ *
+ * A family is given a purpose, meaning a shared parent folder, only when the
+ * folder its files mostly came from is both informative and held at least two
+ * distinct families. A folder called "Downloads" says nothing about what is in
+ * it, so it never becomes a category.
  *
  * @param files - The inventory produced by a scan
  * @param path - Path utility for the current platform
- * @returns Groups sorted by display name
+ * @returns Families sorted by display name
  */
 export function group(files: ScannedFile[], path: PathUtil): FileGroup[] {
-  const distinctNames = countDistinctNamesPerDirectory(files);
   const byNameKey = new Map<string, ScannedFile[]>();
-
   for (const file of files) {
     const nameKey = toNameKey(file.stem);
     if (nameKey === "") {
@@ -131,34 +169,81 @@ export function group(files: ScannedFile[], path: PathUtil): FileGroup[] {
     existing.push(file);
   }
 
+  const candidates: FamilyCandidate[] = [];
+  for (const [nameKey, group] of byNameKey) {
+    // Companions never define a family. A readme sitting beside one model must
+    // not count as a second thing in the folder, or every folder holding a
+    // model and its notes would become a category.
+    const models = group.filter((file) => file.kind !== FILE_KIND.COMPANION);
+    const representative = models[0];
+    if (representative === undefined) {
+      continue;
+    }
+    candidates.push({
+      nameKey,
+      stem: toDisplayStem(representative.stem),
+      sourceDir: dominantDirectory(group) ?? representative.sourceDir,
+    });
+  }
+
+  const families = groupIntoFamilies(candidates, path);
+
+  // A folder only counts towards a purpose when it produced whole families,
+  // so a folder holding one family and its parts is not a category.
+  const familiesPerDirectory = new Map<string, Set<string>>();
+  for (const family of families) {
+    const familyFiles = family.nameKeys.flatMap((key) => byNameKey.get(key) ?? []);
+    const directory = dominantDirectory(familyFiles);
+    if (directory === undefined) {
+      continue;
+    }
+    const existing = familiesPerDirectory.get(directory);
+    if (existing === undefined) {
+      familiesPerDirectory.set(directory, new Set([family.label]));
+      continue;
+    }
+    existing.add(family.label);
+  }
+
   const groups: FileGroup[] = [];
 
-  for (const [nameKey, groupFiles] of byNameKey) {
-    const displayCandidates = groupFiles.map((file) => toDisplayStem(file.stem));
-    const directory = dominantDirectory(groupFiles);
-    const namesInDirectory = directory === undefined ? undefined : distinctNames.get(directory);
+  for (const family of families) {
+    const familyFiles = family.nameKeys.flatMap((key) => byNameKey.get(key) ?? []);
+    if (familyFiles.length === 0) {
+      continue;
+    }
+
+    const directory = dominantDirectory(familyFiles);
+    const folderName = directory === undefined ? "" : path.basename(directory);
+    const isInformative = !UNINFORMATIVE_FOLDER_NAMES.has(folderName.toLowerCase());
+    const familyCount = directory === undefined ? 0 : (familiesPerDirectory.get(directory)?.size ?? 0);
+
+    // A numbered set is already named after its folder, so nesting it inside a
+    // folder of the same name would just repeat itself.
     const hasPurpose =
-      namesInDirectory !== undefined && namesInDirectory.size >= MINIMUM_NAMES_FOR_PURPOSE;
+      !family.isNumberedSet &&
+      isInformative &&
+      folderName !== "" &&
+      familyCount >= MINIMUM_FAMILIES_FOR_PURPOSE;
+
+    const displayName = (() => {
+      if (family.isNumberedSet) {
+        return isInformative && family.label !== "" ? family.label : UNNAMED_NUMBERED_SET;
+      }
+      if (family.label !== "") {
+        return family.label;
+      }
+      return mostCommon(familyFiles.map((file) => toDisplayStem(file.stem))) ?? "Unnamed";
+    })();
 
     groups.push({
-      id: nameKey,
-      nameKey,
-      displayName: mostCommon(displayCandidates) ?? nameKey,
-      purpose: hasPurpose && directory !== undefined ? path.basename(directory) : undefined,
-      files: groupFiles,
+      id: family.nameKeys.join("|"),
+      displayName,
+      purpose: hasPurpose ? folderName : undefined,
+      isNumberedSet: family.isNumberedSet,
+      files: familyFiles,
     });
   }
 
   return groups.sort((left, right) => left.displayName.localeCompare(right.displayName));
-}
-
-/**
- * Removes a duplicate marker from a stem while keeping its original casing and
- * separators, so the library reads the way the user named things.
- */
-function toDisplayStem(stem: string): string {
-  const withoutMarker = stem
-    .replace(/\s*\(\s*\d+\s*\)\s*$/, "")
-    .replace(/[\s._-]*copy(?:\s+\d+)?\s*$/i, "");
-  return withoutMarker.trim() === "" ? stem.trim() : withoutMarker.trim();
 }
