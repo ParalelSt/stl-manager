@@ -44,3 +44,6 @@ apps/desktop/out/
 
 # Server web build
 apps/server/dist-web/
+
+# Packaged applications
+apps/desktop/release/

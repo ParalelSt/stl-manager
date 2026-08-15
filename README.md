@@ -98,6 +98,16 @@ If Electron starts but no window appears, check whether your terminal exports
 `ELECTRON_RUN_AS_NODE`. Some editors set it, and it makes Electron run as plain
 Node. The npm scripts unset it.
 
+## Building a Mac application
+
+```
+npm run package -w apps/desktop
+```
+
+Produces a signed `STL Manager.app` in a `.dmg` under `apps/desktop/release/`,
+for both Apple Silicon and Intel. Notarising it as well takes one extra setup
+step, described in `docs/packaging-the-app.md`.
+
 ## Running the server
 
 ```

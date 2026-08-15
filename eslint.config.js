@@ -70,4 +70,16 @@ export default tseslint.config(
       globals: NODE_GLOBALS,
     },
   },
+  {
+    // Build hooks that a tool loads with require(), such as electron-builder's
+    // afterSign, have to be CommonJS.
+    files: ["**/*.cjs"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: { ...NODE_GLOBALS, require: "readonly", exports: "writable", module: "writable" },
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 );
