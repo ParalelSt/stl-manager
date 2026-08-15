@@ -42,16 +42,46 @@ describe("plan", () => {
     expect(destinationFor(result, "/home/M/tower.stl")).toBe(
       "/lib/_Duplicates/home/M/tower.stl",
     );
-    expect(destinationFor(result, "/home/M/tower (2).stl")).toBe("/lib/tower/tower (2).stl");
+    expect(destinationFor(result, "/home/M/tower (2).stl")).toBe("/lib/tower/tower.stl");
   });
 
-  it("keeps a divergent same-named file in the group folder with its suffix intact", async () => {
+  it("keeps both files when a divergent one shares the name, distinguishing them", async () => {
     const result = await buildPlan({
       "/home/M/tower.stl": { content: "short" },
       "/home/M/tower (2).stl": { content: "much longer content" },
     });
-    expect(destinationFor(result, "/home/M/tower.stl")).toBe("/lib/tower/tower.stl");
-    expect(destinationFor(result, "/home/M/tower (2).stl")).toBe("/lib/tower/tower (2).stl");
+    const destinations = [
+      destinationFor(result, "/home/M/tower.stl"),
+      destinationFor(result, "/home/M/tower (2).stl"),
+    ].sort();
+    expect(destinations).toEqual(["/lib/tower/tower (2).stl", "/lib/tower/tower.stl"]);
+  });
+
+  it("strips the duplicate marker from the winner's filename", async () => {
+    const result = await buildPlan({
+      "/home/M/tower.stl": { content: "same" },
+      "/home/M/tower (2).stl": { content: "same" },
+    });
+    expect(destinationFor(result, "/home/M/tower (2).stl")).toBe("/lib/tower/tower.stl");
+  });
+
+  it("strips a copy marker from the winner's filename", async () => {
+    const result = await buildPlan({
+      "/home/A/space_marine.stl": { content: "same" },
+      "/home/B/space_marine copy.stl": { content: "same" },
+    });
+    const kept = result.moves.find((move) => move.reason === "model");
+    expect(kept?.to).toBe("/lib/space_marine/space_marine.stl");
+  });
+
+  it("keeps the original filename on a quarantined copy", async () => {
+    const result = await buildPlan({
+      "/home/M/tower.stl": { content: "same" },
+      "/home/M/tower (2).stl": { content: "same" },
+    });
+    expect(destinationFor(result, "/home/M/tower.stl")).toBe(
+      "/lib/_Duplicates/home/M/tower.stl",
+    );
   });
 
   it("moves a companion into its model's folder", async () => {

@@ -130,13 +130,15 @@ export async function plan(options: PlanOptions): Promise<SortPlan> {
       for (const kept of [resolution.winner, ...resolution.divergent]) {
         moves.push({
           from: kept.path,
-          to: destinations.claim(folder, kept.stem, ext),
+          to: destinations.claim(folder, currentGroup.displayName, ext),
           groupId: currentGroup.id,
           reason: MOVE_REASON.MODEL,
           size: kept.size,
         });
       }
 
+      // Quarantined copies keep their original filename, because the whole
+      // point of the mirrored path is to show where the file came from.
       for (const copy of resolution.identical) {
         const mirrored = path.join(libraryRoot, QUARANTINE_FOLDER, ...path.segments(copy.path));
         moves.push({
