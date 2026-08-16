@@ -19,6 +19,37 @@ import type {
   UndoResult,
 } from "@stl-manager/core";
 
+/** A machine this one is paired with, as the interface sees it. */
+export interface PeerSummary {
+  id: string;
+  label: string;
+  baseUrl: string;
+  libraryRoot: string;
+}
+
+/** What pairing with a machine needs. */
+export interface PairRequest {
+  baseUrl: string;
+  shareToken: string;
+  libraryRoot: string;
+  label?: string;
+}
+
+/** What a pull needs. */
+export interface PullRequest {
+  peerId: string;
+  stagingDir: string;
+  paths: string[];
+}
+
+/** The outcome of pulling files from a peer. */
+export interface PullOutcome {
+  fetched: number;
+  skipped: number;
+  failed: { path: string; reason: string }[];
+  stagingDir: string;
+}
+
 /** An apply result, plus the run identifier undo will need. */
 export interface AppliedRun extends ApplyResult {
   runId: string;
@@ -40,6 +71,11 @@ export interface Transport {
   undoRun(request: UndoRunRequest): Promise<OperationResult<UndoResult>>;
   readLibrary(request: ReadLibraryRequest): Promise<OperationResult<TreeFolder>>;
   revealInFinder(request: RevealRequest): Promise<OperationResult<undefined>>;
+  listPeers(): Promise<OperationResult<PeerSummary[]>>;
+  addPeer(request: PairRequest): Promise<OperationResult<PeerSummary>>;
+  removePeer(id: string): Promise<OperationResult<undefined>>;
+  peerCatalogue(id: string): Promise<OperationResult<TreeFolder>>;
+  pullFromPeer(request: PullRequest): Promise<OperationResult<PullOutcome>>;
   /** Subscribes to progress events. Returns a function that unsubscribes. */
   onProgress(handler: (progress: ProgressEvent) => void): () => void;
 }
