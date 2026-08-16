@@ -5,7 +5,7 @@ import { createApp } from "./app.js";
 import type { ServerConfig } from "./config.js";
 
 const TOKEN = "a".repeat(64);
-const CONFIG: ServerConfig = { port: 8080, roots: ["/data/models"], configDir: "/config" };
+const CONFIG: ServerConfig = { port: 8080, roots: ["/data/models"], configDir: "/config", dropDir: "/config/drops" };
 
 describe("authentication", () => {
   let app: ReturnType<typeof createApp>;
