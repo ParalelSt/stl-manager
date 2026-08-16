@@ -1,6 +1,18 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { access, copyFile, mkdir, open, readdir, readFile, rename, rm, stat, statfs } from "node:fs/promises";
+import {
+  access,
+  copyFile,
+  mkdir,
+  open,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  stat,
+  statfs,
+  writeFile,
+} from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { DirEntry, FileStat, FileSystem } from "./fileSystem.js";
 
@@ -100,6 +112,11 @@ export class NodeFileSystem implements FileSystem {
     } finally {
       await handle.close();
     }
+  }
+
+  async writeBytes(path: string, bytes: Uint8Array): Promise<void> {
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, bytes);
   }
 
   async readLines(path: string): Promise<string[]> {

@@ -7,7 +7,9 @@ import { createApplyLock } from "./applyLock.js";
 import { createJobRegistry } from "./jobs.js";
 import { createPathGuard } from "./pathGuard.js";
 import { browseRoutes } from "./routes/browse.js";
+import { peerRoutes } from "./routes/peers.js";
 import { shareRoutes } from "./routes/share.js";
+import { createPeerRegistry } from "./peers.js";
 import { workRoutes } from "./routes/work.js";
 import { isTokenValid } from "./token.js";
 
@@ -23,6 +25,8 @@ export interface AppOptions {
   jobs?: JobRegistry;
   /** Where the built interface lives. Omit to serve no interface at all. */
   webRoot?: string;
+  /** Injected so a test can wire one server straight to another. */
+  fetch?: typeof globalThis.fetch;
 }
 
 /** The prefix every authenticated route sits under. */
@@ -92,6 +96,17 @@ export function createApp(options: AppOptions): Hono {
   app.route(`${API_PREFIX}/share`, shareRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, browseRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, workRoutes({ guard, jobs, lock, fs: options.fs, path: options.path }));
+  app.route(
+    API_PREFIX,
+    peerRoutes({
+      peers: createPeerRegistry(options.fs, options.path, options.config.configDir),
+      guard,
+      jobs,
+      fs: options.fs,
+      path: options.path,
+      ...(options.fetch ? { fetch: options.fetch } : {}),
+    }),
+  );
 
   // Anything under /api that reached this far is a real miss. Answering with
   // the interface's HTML instead would surface as a confusing JSON parse

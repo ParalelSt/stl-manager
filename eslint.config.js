@@ -19,6 +19,13 @@ export default tseslint.config(
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/consistent-type-imports": "error",
+      // Destructuring a field out in order to drop it is the clearest way to
+      // omit something, and the rest sibling is the point rather than an
+      // oversight. A leading underscore marks anything else deliberate.
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { ignoreRestSiblings: true, argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
   {

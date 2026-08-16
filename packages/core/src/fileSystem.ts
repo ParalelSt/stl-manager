@@ -40,6 +40,8 @@ export interface FileSystem {
   readChunk(path: string, offset: number, length: number): Promise<Uint8Array>;
   /** Appends one line, creating the file and its parents if needed, and flushes it. */
   appendLine(path: string, line: string): Promise<void>;
+  /** Writes raw bytes, replacing anything already there. */
+  writeBytes(path: string, bytes: Uint8Array): Promise<void>;
   /** Reads a file as lines, with the trailing empty line removed. */
   readLines(path: string): Promise<string[]>;
   /** Bytes available on the volume holding the given path. */
