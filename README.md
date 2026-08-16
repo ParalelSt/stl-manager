@@ -9,9 +9,10 @@ run can be reversed.
 
 ## Status
 
-Phases 1 and 2 of 5 are built: the sorter, and a server that runs the same
-sorter in a container with a browser interface. Peer sharing, remote access and
-Google Drive are designed but not built. See the documents in `docs/design/`.
+Phases 1 to 3 of 5 are built: the sorter, a server that runs the same sorter in
+a container with a browser interface, and sharing between two machines. Remote
+access beyond the local network and Google Drive are not built. See the
+documents in `docs/design/`.
 
 ## How the sorting works
 
@@ -97,6 +98,13 @@ npm run dev -w apps/desktop
 If Electron starts but no window appears, check whether your terminal exports
 `ELECTRON_RUN_AS_NODE`. Some editors set it, and it makes Electron run as plain
 Node. The npm scripts unset it.
+
+## Sharing between two machines
+
+Both machines run the server, pair once with an address and a read-only share
+token, and either can then browse the other and copy models across. Pulled files
+are sorted by the receiving machine's own rules. See
+`docs/sharing-between-machines.md`.
 
 ## Building a Mac application
 

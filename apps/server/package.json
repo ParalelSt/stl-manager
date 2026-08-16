@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "main": "./dist/main.js",
+  "main": "./dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json && vite build",
     "start": "node dist/main.js",
@@ -28,5 +28,12 @@
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3",
     "vite": "^7.3.6"
+  },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   }
 }

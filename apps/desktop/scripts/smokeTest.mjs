@@ -25,12 +25,17 @@ const here = import.meta.dirname;
  * purpose rather than something that arrives unnoticed.
  */
 const EXPECTED_BRIDGE_METHODS = [
+  "addPeer",
   "applyPlan",
   "buildPlan",
   "chooseDirectory",
+  "listPeers",
   "listRuns",
   "onProgress",
+  "peerCatalogue",
+  "pullFromPeer",
   "readLibrary",
+  "removePeer",
   "revealInFinder",
   "undoRun",
 ];

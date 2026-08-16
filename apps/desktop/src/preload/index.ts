@@ -23,6 +23,12 @@ const api = {
     ipcRenderer.invoke(IPC_CHANNEL.READ_LIBRARY, request),
   revealInFinder: (request: unknown): Promise<unknown> =>
     ipcRenderer.invoke(IPC_CHANNEL.REVEAL_IN_FINDER, request),
+  listPeers: (): Promise<unknown> => ipcRenderer.invoke("listPeers"),
+  addPeer: (request: unknown): Promise<unknown> => ipcRenderer.invoke("addPeer", request),
+  removePeer: (id: unknown): Promise<unknown> => ipcRenderer.invoke("removePeer", id),
+  peerCatalogue: (id: unknown): Promise<unknown> => ipcRenderer.invoke("peerCatalogue", id),
+  pullFromPeer: (request: unknown): Promise<unknown> =>
+    ipcRenderer.invoke("pullFromPeer", request),
   onProgress: (handler: (progress: ProgressEvent) => void): (() => void) => {
     const listener = (_event: unknown, progress: ProgressEvent): void => {
       handler(progress);

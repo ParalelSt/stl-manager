@@ -11,6 +11,7 @@ export const SCREEN = {
   APPLY: "apply",
   HISTORY: "history",
   LIBRARY: "library",
+  PEERS: "peers",
 } as const;
 
 /** One of the application's screens. */

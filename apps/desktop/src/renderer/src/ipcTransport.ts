@@ -25,6 +25,11 @@ export const ipcTransport: Transport = {
   undoRun: (request) => window.stlManager.undoRun(request),
   readLibrary: (request) => window.stlManager.readLibrary(request),
   revealInFinder: (request) => window.stlManager.revealInFinder(request),
+  listPeers: () => window.stlManager.listPeers(),
+  addPeer: (request) => window.stlManager.addPeer(request),
+  removePeer: (id) => window.stlManager.removePeer(id),
+  peerCatalogue: (id) => window.stlManager.peerCatalogue(id),
+  pullFromPeer: (request) => window.stlManager.pullFromPeer(request),
   onProgress: (handler) => window.stlManager.onProgress(handler),
 };
 
