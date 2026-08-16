@@ -9,9 +9,12 @@ run can be reversed.
 
 ## Status
 
-Phases 1 to 4 of 5 are built: the sorter, a server that runs the same sorter in
-a container with a browser interface, sharing between two machines, and share
-links for other people. Google Drive is not built. See the
+All five phases are built: the sorter, a server that runs the same sorter in a
+container with a browser interface, sharing between two machines, share links
+for other people, and pulling from Google Drive.
+
+The Drive integration is the one part not exercised against the real service,
+because that needs your own Google OAuth client. See `docs/google-drive.md`. See the
 documents in `docs/design/`.
 
 ## How the sorting works
@@ -112,6 +115,13 @@ Pick some files and get a link. The recipient sees only those files, with a
 download for each, and can optionally send a file back into a drop folder that
 never touches your library. Links expire and can be revoked. See
 `docs/sharing-with-people.md`.
+
+## Google Drive
+
+Connect a Drive and pull models out of it into your library, sorted by your own
+rules. Read-only: the application asks for a scope that cannot change anything
+in your Drive. Setting it up needs your own Google OAuth client. See
+`docs/google-drive.md`.
 
 ## Building a Mac application
 
