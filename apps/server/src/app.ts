@@ -7,6 +7,7 @@ import { createApplyLock } from "./applyLock.js";
 import { createJobRegistry } from "./jobs.js";
 import { createPathGuard } from "./pathGuard.js";
 import { browseRoutes } from "./routes/browse.js";
+import { driveRoutes } from "./routes/drive.js";
 import { peerRoutes } from "./routes/peers.js";
 import { publicShareRoutes } from "./routes/publicShare.js";
 import { shareAdminRoutes } from "./routes/shares.js";
@@ -112,6 +113,17 @@ export function createApp(options: AppOptions): Hono {
   app.route(`${API_PREFIX}/share`, shareRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, browseRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, shareAdminRoutes({ shares, guard, fs: options.fs, path: options.path }));
+  app.route(
+    API_PREFIX,
+    driveRoutes({
+      guard,
+      jobs,
+      fs: options.fs,
+      path: options.path,
+      configDir: options.config.configDir,
+      ...(options.fetch ? { fetch: options.fetch } : {}),
+    }),
+  );
   app.route(API_PREFIX, workRoutes({ guard, jobs, lock, fs: options.fs, path: options.path }));
   app.route(
     API_PREFIX,
