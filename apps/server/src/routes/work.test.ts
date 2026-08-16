@@ -7,6 +7,7 @@ import { createApp } from "../app.js";
 import type { ServerConfig } from "../config.js";
 
 const TOKEN = "a".repeat(64);
+const SHARE_TOKEN = "s".repeat(64);
 const AUTH = { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" };
 
 describe("work routes", () => {
@@ -53,7 +54,7 @@ describe("work routes", () => {
     await writeFile(join(source, "kit_lip.stl"), "lip-mesh");
 
     const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config" };
-    app = createApp({ config, token: TOKEN, fs: new NodeFileSystem(), path: posixPath });
+    app = createApp({ config, token: TOKEN, shareToken: SHARE_TOKEN, fs: new NodeFileSystem(), path: posixPath });
   });
 
   afterEach(async () => {

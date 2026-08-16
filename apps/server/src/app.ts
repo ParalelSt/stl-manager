@@ -14,6 +14,8 @@ import { isTokenValid } from "./token.js";
 export interface AppOptions {
   config: ServerConfig;
   token: string;
+  /** The read-only token paired machines present. */
+  shareToken: string;
   fs: FileSystem;
   path: PathUtil;
   /** Supplied by tests that need to inspect or control jobs. */
@@ -51,7 +53,27 @@ export function createApp(options: AppOptions): Hono {
   // one and cannot leak it into process listings.
   app.get("/health", (context) => context.json({ ok: true }));
 
+  // Share routes accept either token. The owner can obviously read their own
+  // machine, and a paired machine may read only through here.
+  app.use(`${API_PREFIX}/share/*`, async (context, next) => {
+    const supplied = suppliedToken(context.req.header("Authorization"));
+    const isAllowed =
+      isTokenValid(supplied, options.shareToken) || isTokenValid(supplied, options.token);
+    if (!isAllowed) {
+      return context.json({ ok: false, error: "Not authorised." }, 401);
+    }
+    await next();
+    return undefined;
+  });
+
+  // Everything else requires the machine's own token. A share token reaching
+  // one of these would let a paired machine reorganise this library, which is
+  // the whole reason the two are separate.
   app.use(`${API_PREFIX}/*`, async (context, next) => {
+    if (context.req.path.startsWith(`${API_PREFIX}/share/`)) {
+      await next();
+      return undefined;
+    }
     const supplied = suppliedToken(context.req.header("Authorization"));
     if (!isTokenValid(supplied, options.token)) {
       // Deliberately says nothing about why, so a refusal cannot be used to

@@ -9,6 +9,7 @@ import type { ServerConfig } from "./config.js";
 import { createHttpTransport } from "./httpTransport.js";
 
 const TOKEN = "a".repeat(64);
+const SHARE_TOKEN = "s".repeat(64);
 
 /**
  * A realistic collection sorted entirely over HTTP.
@@ -73,7 +74,7 @@ describe("a realistic collection over HTTP", () => {
     await write("Notes/taxes.docx", "unrelated");
 
     const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config" };
-    const app = createApp({ config, token: TOKEN, fs: new NodeFileSystem(), path: posixPath });
+    const app = createApp({ config, token: TOKEN, shareToken: SHARE_TOKEN, fs: new NodeFileSystem(), path: posixPath });
     transport = createHttpTransport({
       baseUrl: "http://server",
       token: TOKEN,
