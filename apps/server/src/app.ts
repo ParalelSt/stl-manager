@@ -7,6 +7,7 @@ import { createApplyLock } from "./applyLock.js";
 import { createJobRegistry } from "./jobs.js";
 import { createPathGuard } from "./pathGuard.js";
 import { browseRoutes } from "./routes/browse.js";
+import { shareRoutes } from "./routes/share.js";
 import { workRoutes } from "./routes/work.js";
 import { isTokenValid } from "./token.js";
 
@@ -88,6 +89,7 @@ export function createApp(options: AppOptions): Hono {
   const jobs = options.jobs ?? createJobRegistry();
   const lock = createApplyLock();
 
+  app.route(`${API_PREFIX}/share`, shareRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, browseRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, workRoutes({ guard, jobs, lock, fs: options.fs, path: options.path }));
 
