@@ -132,7 +132,7 @@ export function workRoutes(options: WorkOptions): Hono {
         const result = await apply({
           fs,
           path,
-          plan: { libraryRoot, scanRoots: [], moves, groups: [], untouched: [], problems: [] },
+          plan: { libraryRoot, scanRoots: [], occupied: [], moves, groups: [], untouched: [], problems: [] },
           journal: new Journal(fs, path, libraryRoot),
           runId,
           onProgress: (done, total, currentPath) => {

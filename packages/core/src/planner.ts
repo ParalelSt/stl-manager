@@ -3,18 +3,17 @@ import { resolveDuplicates } from "./duplicates.js";
 import type { FileSystem, PathUtil } from "./fileSystem.js";
 import { group } from "./grouper.js";
 import { toNameKey } from "./nameKey.js";
+import { readLibraryTree } from "./readLibraryTree.js";
 import { scan } from "./scanner.js";
-import { FILE_KIND, type Problem, type ScannedFile } from "./types.js";
+import {
+  FILE_KIND,
+  MOVE_REASON,
+  type MoveReason,
+  type Problem,
+  type ScannedFile,
+} from "./types.js";
 
-/** Why a file is being moved. */
-export const MOVE_REASON = {
-  MODEL: "model",
-  COMPANION: "companion",
-  DUPLICATE: "duplicate",
-} as const;
-
-/** One of the reasons a move can be planned. */
-export type MoveReason = (typeof MOVE_REASON)[keyof typeof MOVE_REASON];
+export { MOVE_REASON, type MoveReason };
 
 /** A single proposed move. Nothing has happened on disk. */
 export interface PlannedMove {
@@ -57,6 +56,14 @@ export interface PlanModel {
   libraryRoot: string;
   /** The folders that were scanned, used to keep quarantine paths short. */
   scanRoots: string[];
+  /**
+   * Paths the library already holds.
+   *
+   * Claimed before anything else, so a second run never proposes a
+   * destination that is already occupied. Carried on the model rather than
+   * recomputed, so it survives the user editing the plan.
+   */
+  occupied: string[];
   groups: GroupPlan[];
   /** Companions and other files deliberately left where they are. */
   untouched: ScannedFile[];
@@ -90,7 +97,14 @@ export const QUARANTINE_FOLDER = "_Duplicates";
 class DestinationRegistry {
   readonly #taken = new Set<string>();
 
-  constructor(private readonly path: PathUtil) {}
+  constructor(
+    private readonly path: PathUtil,
+    occupied: string[] = [],
+  ) {
+    for (const entry of occupied) {
+      this.#taken.add(entry.toLowerCase());
+    }
+  }
 
   claim(directory: string, stem: string, ext: string): string {
     for (let attempt = 1; ; attempt += 1) {
@@ -156,7 +170,7 @@ export function folderFor(group: GroupPlan, libraryRoot: string, path: PathUtil)
  * @returns Every move implied by the model, with collisions already resolved
  */
 export function deriveMoves(model: PlanModel, path: PathUtil): PlannedMove[] {
-  const destinations = new DestinationRegistry(path);
+  const destinations = new DestinationRegistry(path, model.occupied);
   const moves: PlannedMove[] = [];
 
   for (const group of model.groups) {
@@ -305,9 +319,24 @@ export async function plan(options: PlanOptions): Promise<SortPlan> {
     });
   }
 
+  // What the library already holds, so a second run cannot land on top of it.
+  const existing = await readLibraryTree(fs, path, libraryRoot);
+  const occupied: string[] = [];
+  const collect = (node: { kind: string; path: string; children?: unknown[] }): void => {
+    if (node.kind === "file") {
+      occupied.push(node.path);
+      return;
+    }
+    for (const child of (node.children ?? []) as typeof node[]) {
+      collect(child);
+    }
+  };
+  collect(existing);
+
   const model: PlanModel = {
     libraryRoot,
     scanRoots: roots,
+    occupied,
     groups,
     untouched: assignment.untouched,
     problems: scanned.problems,

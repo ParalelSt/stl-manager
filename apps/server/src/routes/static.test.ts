@@ -7,6 +7,7 @@ import { createApp } from "../app.js";
 import type { ServerConfig } from "../config.js";
 
 const TOKEN = "a".repeat(64);
+const SHARE_TOKEN = "s".repeat(64);
 
 describe("serving the interface", () => {
   let base: string;
@@ -24,6 +25,7 @@ describe("serving the interface", () => {
     app = createApp({
       config,
       token: TOKEN,
+      shareToken: SHARE_TOKEN,
       fs: new NodeFileSystem(),
       path: posixPath,
       webRoot,
@@ -66,6 +68,7 @@ describe("serving the interface", () => {
     const bare = createApp({
       config: { port: 8080, roots: [base], configDir: "/config" },
       token: TOKEN,
+      shareToken: SHARE_TOKEN,
       fs: new NodeFileSystem(),
       path: posixPath,
     });

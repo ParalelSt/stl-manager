@@ -8,6 +8,7 @@ import { createApp } from "../app.js";
 import type { ServerConfig } from "../config.js";
 
 const TOKEN = "a".repeat(64);
+const SHARE_TOKEN = "s".repeat(64);
 
 describe("browsing", () => {
   let base: string;
@@ -29,7 +30,7 @@ describe("browsing", () => {
     await writeFile(join(root, "notes.txt"), "not a directory");
 
     const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config" };
-    app = createApp({ config, token: TOKEN, fs: new NodeFileSystem(), path: posixPath });
+    app = createApp({ config, token: TOKEN, shareToken: SHARE_TOKEN, fs: new NodeFileSystem(), path: posixPath });
   });
 
   afterEach(async () => {

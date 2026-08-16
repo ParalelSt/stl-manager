@@ -1,7 +1,7 @@
 import type { FileSystem, PathUtil } from "./fileSystem.js";
 import { STATE_FOLDER } from "./journal.js";
 import type { TreeFolder, TreeNode } from "./libraryTree.js";
-import { MOVE_REASON } from "./planner.js";
+import { MOVE_REASON } from "./types.js";
 
 /**
  * Reads an existing library from disk as a tree.

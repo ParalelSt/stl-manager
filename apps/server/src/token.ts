@@ -4,6 +4,15 @@ import type { FileSystem, PathUtil } from "@stl-manager/core";
 /** The file inside the config directory holding the access token. */
 export const TOKEN_FILENAME = "token";
 
+/**
+ * The file holding the read-only token given to paired machines.
+ *
+ * Kept separate from the access token on purpose. The access token is the whole
+ * of this machine's authority, and handing it to another machine so it can read
+ * a catalogue would let that machine reorganise the library.
+ */
+export const SHARE_TOKEN_FILENAME = "share-token";
+
 /** How many random bytes back a token. */
 const TOKEN_BYTES = 32;
 
@@ -24,7 +33,27 @@ export async function ensureToken(
   path: PathUtil,
   configDir: string,
 ): Promise<string> {
-  const tokenPath = path.join(configDir, TOKEN_FILENAME);
+  return ensureTokenAt(fs, path.join(configDir, TOKEN_FILENAME));
+}
+
+/**
+ * Loads the read-only token peers use, creating one on first start.
+ *
+ * @param fs - Filesystem to read and write through
+ * @param path - Path utility for the current platform
+ * @param configDir - The directory holding the server's own state
+ * @returns The token a paired machine presents to read this one
+ */
+export async function ensureShareToken(
+  fs: FileSystem,
+  path: PathUtil,
+  configDir: string,
+): Promise<string> {
+  return ensureTokenAt(fs, path.join(configDir, SHARE_TOKEN_FILENAME));
+}
+
+/** Reads a token file, creating it with a fresh random token when empty. */
+async function ensureTokenAt(fs: FileSystem, tokenPath: string): Promise<string> {
   const existing = (await fs.readLines(tokenPath)).join("").trim();
   if (existing !== "") {
     return existing;

@@ -3,9 +3,9 @@ import {
   deriveMoves,
   folderFor,
   QUARANTINE_FOLDER,
-  type MoveReason,
   type PlanModel,
 } from "./planner.js";
+import type { MoveReason } from "./types.js";
 
 /** A file as it will appear in the library. */
 export interface TreeFile {

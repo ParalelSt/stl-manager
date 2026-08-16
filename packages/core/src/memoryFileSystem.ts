@@ -257,6 +257,10 @@ export class MemoryFileSystem implements FileSystem {
     existing.mtimeMs = this.#clock;
   }
 
+  async writeBytes(path: string, bytes: Uint8Array): Promise<void> {
+    this.#write(normalizePath(path), { content: new TextDecoder().decode(bytes) });
+  }
+
   async readLines(path: string): Promise<string[]> {
     const entry = this.#files.get(normalizePath(path));
     if (entry === undefined) {
@@ -299,6 +303,7 @@ export function toPlainFileSystem(fs: MemoryFileSystem): FileSystem {
     hash: fs.hash.bind(fs),
     readChunk: fs.readChunk.bind(fs),
     appendLine: fs.appendLine.bind(fs),
+    writeBytes: fs.writeBytes.bind(fs),
     readLines: fs.readLines.bind(fs),
     freeSpace: fs.freeSpace.bind(fs),
   };

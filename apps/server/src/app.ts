@@ -7,6 +7,9 @@ import { createApplyLock } from "./applyLock.js";
 import { createJobRegistry } from "./jobs.js";
 import { createPathGuard } from "./pathGuard.js";
 import { browseRoutes } from "./routes/browse.js";
+import { peerRoutes } from "./routes/peers.js";
+import { shareRoutes } from "./routes/share.js";
+import { createPeerRegistry } from "./peers.js";
 import { workRoutes } from "./routes/work.js";
 import { isTokenValid } from "./token.js";
 
@@ -14,12 +17,16 @@ import { isTokenValid } from "./token.js";
 export interface AppOptions {
   config: ServerConfig;
   token: string;
+  /** The read-only token paired machines present. */
+  shareToken: string;
   fs: FileSystem;
   path: PathUtil;
   /** Supplied by tests that need to inspect or control jobs. */
   jobs?: JobRegistry;
   /** Where the built interface lives. Omit to serve no interface at all. */
   webRoot?: string;
+  /** Injected so a test can wire one server straight to another. */
+  fetch?: typeof globalThis.fetch;
 }
 
 /** The prefix every authenticated route sits under. */
@@ -51,7 +58,27 @@ export function createApp(options: AppOptions): Hono {
   // one and cannot leak it into process listings.
   app.get("/health", (context) => context.json({ ok: true }));
 
+  // Share routes accept either token. The owner can obviously read their own
+  // machine, and a paired machine may read only through here.
+  app.use(`${API_PREFIX}/share/*`, async (context, next) => {
+    const supplied = suppliedToken(context.req.header("Authorization"));
+    const isAllowed =
+      isTokenValid(supplied, options.shareToken) || isTokenValid(supplied, options.token);
+    if (!isAllowed) {
+      return context.json({ ok: false, error: "Not authorised." }, 401);
+    }
+    await next();
+    return undefined;
+  });
+
+  // Everything else requires the machine's own token. A share token reaching
+  // one of these would let a paired machine reorganise this library, which is
+  // the whole reason the two are separate.
   app.use(`${API_PREFIX}/*`, async (context, next) => {
+    if (context.req.path.startsWith(`${API_PREFIX}/share/`)) {
+      await next();
+      return undefined;
+    }
     const supplied = suppliedToken(context.req.header("Authorization"));
     if (!isTokenValid(supplied, options.token)) {
       // Deliberately says nothing about why, so a refusal cannot be used to
@@ -66,8 +93,20 @@ export function createApp(options: AppOptions): Hono {
   const jobs = options.jobs ?? createJobRegistry();
   const lock = createApplyLock();
 
+  app.route(`${API_PREFIX}/share`, shareRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, browseRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, workRoutes({ guard, jobs, lock, fs: options.fs, path: options.path }));
+  app.route(
+    API_PREFIX,
+    peerRoutes({
+      peers: createPeerRegistry(options.fs, options.path, options.config.configDir),
+      guard,
+      jobs,
+      fs: options.fs,
+      path: options.path,
+      ...(options.fetch ? { fetch: options.fetch } : {}),
+    }),
+  );
 
   // Anything under /api that reached this far is a real miss. Answering with
   // the interface's HTML instead would surface as a confusing JSON parse
