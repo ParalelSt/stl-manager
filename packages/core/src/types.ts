@@ -57,3 +57,13 @@ export interface Problem {
   stage: PipelineStage;
   message: string;
 }
+
+/** Why a file is being moved. */
+export const MOVE_REASON = {
+  MODEL: "model",
+  COMPANION: "companion",
+  DUPLICATE: "duplicate",
+} as const;
+
+/** One of the reasons a move can be planned. */
+export type MoveReason = (typeof MOVE_REASON)[keyof typeof MOVE_REASON];

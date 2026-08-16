@@ -117,7 +117,7 @@ export function registerHandlers(): void {
           path: posixPath,
           // Applying needs only the moves; the scan roots mattered when the
           // destinations were derived, which has already happened.
-          plan: { libraryRoot, scanRoots: [], moves, groups: [], untouched: [], problems: [] },
+          plan: { libraryRoot, scanRoots: [], occupied: [], moves, groups: [], untouched: [], problems: [] },
           journal: new Journal(fs, posixPath, libraryRoot),
           runId,
           onProgress: (done, total, currentPath) => {

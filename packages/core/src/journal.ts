@@ -1,5 +1,5 @@
 import type { FileSystem, PathUtil } from "./fileSystem.js";
-import { MOVE_REASON, type MoveReason } from "./planner.js";
+import { MOVE_REASON, type MoveReason } from "./types.js";
 
 /** What happened to a single file during an apply run. */
 export const OPERATION_OUTCOME = {

@@ -79,6 +79,14 @@ async function moveOne(
   fs: FileSystem,
   path: PathUtil,
 ): Promise<OperationOutcome> {
+  // Never write over something already there. The planner avoids occupied
+  // destinations, but this is the last line of defence and the one that
+  // matters: a rename would replace the file silently, and the journal would
+  // then record a move that cannot be undone without losing the original.
+  if (await fs.exists(move.to)) {
+    throw new Error("Something is already at that destination, so it was left alone.");
+  }
+
   await fs.mkdir(path.dirname(move.to));
 
   try {
