@@ -21,7 +21,7 @@ describe("serving the interface", () => {
     await writeFile(join(webRoot, "index.html"), "<!doctype html><title>STL Manager</title>");
     await writeFile(join(webRoot, "assets", "index.css"), "body{}");
 
-    const config: ServerConfig = { port: 8080, roots: [base], configDir: "/config" };
+    const config: ServerConfig = { port: 8080, roots: [base], configDir: "/config", dropDir: "/config/drops" };
     app = createApp({
       config,
       token: TOKEN,
@@ -66,7 +66,7 @@ describe("serving the interface", () => {
 
   it("serves no interface when none is configured", async () => {
     const bare = createApp({
-      config: { port: 8080, roots: [base], configDir: "/config" },
+      config: { port: 8080, roots: [base], configDir: "/config", dropDir: "/config/drops" },
       token: TOKEN,
       shareToken: SHARE_TOKEN,
       fs: new NodeFileSystem(),

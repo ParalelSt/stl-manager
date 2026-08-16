@@ -5,6 +5,8 @@ export interface ServerConfig {
   roots: string[];
   /** Where the token and any future state are kept. */
   configDir: string;
+  /** Where files uploaded to a share land. Never inside a library. */
+  dropDir: string;
 }
 
 const DEFAULT_PORT = 8080;
@@ -52,9 +54,13 @@ export function loadConfig(env: Record<string, string | undefined>): ServerConfi
     }
   }
 
+  const configDir = env["STL_CONFIG_DIR"] ?? DEFAULT_CONFIG_DIR;
   return {
     port: parsePort(env["PORT"]),
     roots,
-    configDir: env["STL_CONFIG_DIR"] ?? DEFAULT_CONFIG_DIR,
+    configDir,
+    // Beneath the config directory by default, which is a volume the user
+    // already knows about and which no library ever lives in.
+    dropDir: env["STL_DROP_DIR"] ?? `${configDir}/drops`,
   };
 }

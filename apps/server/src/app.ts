@@ -8,7 +8,10 @@ import { createJobRegistry } from "./jobs.js";
 import { createPathGuard } from "./pathGuard.js";
 import { browseRoutes } from "./routes/browse.js";
 import { peerRoutes } from "./routes/peers.js";
+import { publicShareRoutes } from "./routes/publicShare.js";
+import { shareAdminRoutes } from "./routes/shares.js";
 import { shareRoutes } from "./routes/share.js";
+import { createShareRegistry } from "./shares.js";
 import { createPeerRegistry } from "./peers.js";
 import { workRoutes } from "./routes/work.js";
 import { isTokenValid } from "./token.js";
@@ -90,11 +93,25 @@ export function createApp(options: AppOptions): Hono {
   });
 
   const guard = createPathGuard(options.config.roots);
+  const shares = createShareRegistry(options.fs, options.path, options.config.configDir);
+
+  // The only routes reachable without this machine's token. Mounted before the
+  // authentication middleware, and scoped to one share by the secret in the URL.
+  app.route(
+    "/s",
+    publicShareRoutes({
+      shares,
+      fs: options.fs,
+      path: options.path,
+      dropDir: options.config.dropDir,
+    }),
+  );
   const jobs = options.jobs ?? createJobRegistry();
   const lock = createApplyLock();
 
   app.route(`${API_PREFIX}/share`, shareRoutes({ guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, browseRoutes({ guard, fs: options.fs, path: options.path }));
+  app.route(API_PREFIX, shareAdminRoutes({ shares, guard, fs: options.fs, path: options.path }));
   app.route(API_PREFIX, workRoutes({ guard, jobs, lock, fs: options.fs, path: options.path }));
   app.route(
     API_PREFIX,

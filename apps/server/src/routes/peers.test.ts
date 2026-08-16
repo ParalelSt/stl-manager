@@ -87,6 +87,7 @@ describe("peers", () => {
       port: 8080,
       roots: [theirsRoot],
       configDir: theirsConfig,
+      dropDir: join(theirsConfig, "drops"),
     };
     const theirs = createApp({
       config: theirsConfigured,
@@ -96,7 +97,7 @@ describe("peers", () => {
       path: posixPath,
     });
 
-    const mineConfigured: ServerConfig = { port: 8080, roots: [mineRoot], configDir: mineConfig };
+    const mineConfigured: ServerConfig = { port: 8080, roots: [mineRoot], configDir: mineConfig, dropDir: join(mineConfig, "drops") };
     mine = createApp({
       config: mineConfigured,
       token: MINE_TOKEN,

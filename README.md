@@ -9,9 +9,9 @@ run can be reversed.
 
 ## Status
 
-Phases 1 to 3 of 5 are built: the sorter, a server that runs the same sorter in
-a container with a browser interface, and sharing between two machines. Remote
-access beyond the local network and Google Drive are not built. See the
+Phases 1 to 4 of 5 are built: the sorter, a server that runs the same sorter in
+a container with a browser interface, sharing between two machines, and share
+links for other people. Google Drive is not built. See the
 documents in `docs/design/`.
 
 ## How the sorting works
@@ -105,6 +105,13 @@ Both machines run the server, pair once with an address and a read-only share
 token, and either can then browse the other and copy models across. Pulled files
 are sorted by the receiving machine's own rules. See
 `docs/sharing-between-machines.md`.
+
+## Sharing with other people
+
+Pick some files and get a link. The recipient sees only those files, with a
+download for each, and can optionally send a file back into a drop folder that
+never touches your library. Links expire and can be revoked. See
+`docs/sharing-with-people.md`.
 
 ## Building a Mac application
 

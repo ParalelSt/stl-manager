@@ -73,7 +73,7 @@ describe("a realistic collection over HTTP", () => {
     // Never collected.
     await write("Notes/taxes.docx", "unrelated");
 
-    const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config" };
+    const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config", dropDir: "/config/drops" };
     const app = createApp({ config, token: TOKEN, shareToken: SHARE_TOKEN, fs: new NodeFileSystem(), path: posixPath });
     transport = createHttpTransport({
       baseUrl: "http://server",

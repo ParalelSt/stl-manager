@@ -92,7 +92,7 @@ describe("two machines sharing", () => {
     await writeFile(join(theirsLibrary, "Terrain", "ruined_wall", "ruined_wall.stl"), "wall-mesh");
 
     const theirs = createApp({
-      config: { port: 8080, roots: [theirsRoot], configDir: join(base, "theirs-config") },
+      config: { port: 8080, roots: [theirsRoot], configDir: join(base, "theirs-config"), dropDir: join(base, "theirs-drops") },
       token: THEIRS_TOKEN,
       shareToken: THEIRS_SHARE,
       fs: new NodeFileSystem(),
@@ -103,6 +103,7 @@ describe("two machines sharing", () => {
       port: 8080,
       roots: [mineRoot],
       configDir: join(base, "mine-config"),
+      dropDir: join(base, "mine-drops"),
     };
     mine = createApp({
       config: mineConfig,
