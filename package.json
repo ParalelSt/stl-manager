@@ -9,7 +9,7 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @stl-manager/contracts && npm run build -w @stl-manager/core && npm run build -w @stl-manager/ui && npm run build -w @stl-manager/server && npm run build -w @stl-manager/desktop",
     "lint": "eslint .",
     "test": "npm run test --workspaces --if-present"
   },
