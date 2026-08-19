@@ -1,7 +1,15 @@
 import type { PlanModel, RunSummary } from "@stl-manager/core";
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import type { ProgressEvent } from "@stl-manager/contracts";
 import type { AppliedRun } from "./host.js";
+import {
+  rememberedFrom,
+  STORAGE_KEY,
+  STORAGE_VERSION,
+  toRemembered,
+  type RememberedChoices,
+} from "./persistence.js";
 
 /** The screens the application moves between. */
 export const SCREEN = {
@@ -27,6 +35,8 @@ interface AppState {
   applied: AppliedRun | undefined;
   runs: RunSummary[];
   error: string | undefined;
+  /** Remembered folders that are no longer on disk. */
+  missingRoots: string[];
 
   goTo: (screen: Screen) => void;
   setLibraryRoot: (path: string) => void;
@@ -37,6 +47,7 @@ interface AppState {
   setApplied: (applied: AppliedRun | undefined) => void;
   setRuns: (runs: RunSummary[]) => void;
   setError: (error: string | undefined) => void;
+  setMissingRoots: (paths: string[]) => void;
 }
 
 /**
@@ -45,34 +56,60 @@ interface AppState {
  * Deliberately small. It holds where the user is, what they have chosen, and
  * the plan they are working on. Everything about how files are grouped and
  * where they will land lives in the engine, not here.
+ *
+ * The chosen folders survive closing the application; nothing else does. A
+ * plan describes a moment rather than a choice, and restoring a half-finished
+ * run against files that may have moved since would be worse than starting
+ * cleanly.
  */
-export const useAppStore = create<AppState>((set) => ({
-  screen: SCREEN.SETUP,
-  libraryRoot: undefined,
-  scanRoots: [],
-  plan: undefined,
-  progress: undefined,
-  applied: undefined,
-  runs: [],
-  error: undefined,
+export const useAppStore = create<AppState>()(
+  // The fourth type argument is the persisted shape, which is narrower than
+  // the state: only the folders are written down.
+  persist<AppState, [], [], RememberedChoices>(
+    (set) => ({
+      screen: SCREEN.SETUP,
+      libraryRoot: undefined,
+      scanRoots: [],
+      plan: undefined,
+      progress: undefined,
+      applied: undefined,
+      runs: [],
+      error: undefined,
+      missingRoots: [],
 
-  goTo: (screen) => set({ screen, error: undefined }),
-  setLibraryRoot: (libraryRoot) => set({ libraryRoot }),
+      goTo: (screen) => set({ screen, error: undefined }),
+      setLibraryRoot: (libraryRoot) => set({ libraryRoot }),
 
-  addScanRoot: (path) =>
-    set((state) => {
-      if (state.scanRoots.includes(path)) {
-        return state;
-      }
-      return { scanRoots: [...state.scanRoots, path] };
+      addScanRoot: (path) =>
+        set((state) => {
+          if (state.scanRoots.includes(path)) {
+            return state;
+          }
+          return { scanRoots: [...state.scanRoots, path] };
+        }),
+
+      removeScanRoot: (path) =>
+        set((state) => ({
+          scanRoots: state.scanRoots.filter((root) => root !== path),
+          missingRoots: state.missingRoots.filter((root) => root !== path),
+        })),
+
+      setPlan: (plan) => set({ plan }),
+      setProgress: (progress) => set({ progress }),
+      setApplied: (applied) => set({ applied }),
+      setRuns: (runs) => set({ runs }),
+      setError: (error) => set({ error }),
+      setMissingRoots: (missingRoots) => set({ missingRoots }),
     }),
-
-  removeScanRoot: (path) =>
-    set((state) => ({ scanRoots: state.scanRoots.filter((root) => root !== path) })),
-
-  setPlan: (plan) => set({ plan }),
-  setProgress: (progress) => set({ progress }),
-  setApplied: (applied) => set({ applied }),
-  setRuns: (runs) => set({ runs }),
-  setError: (error) => set({ error }),
-}));
+    {
+      name: STORAGE_KEY,
+      version: STORAGE_VERSION,
+      storage: createJSONStorage(() => localStorage),
+      // Only the folders are written down, and whatever comes back is
+      // validated rather than trusted: storage outlives releases and a user
+      // can edit it.
+      partialize: rememberedFrom,
+      merge: (stored, current) => ({ ...current, ...toRemembered(stored) }),
+    },
+  ),
+);
