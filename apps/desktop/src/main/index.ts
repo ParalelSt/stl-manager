@@ -5,6 +5,7 @@ import electron from "electron";
 const { app, BrowserWindow, shell } = electron;
 import { registerHandlers } from "./handlers.js";
 import { registerPeerHandlers } from "./peerHandlers.js";
+import { registerShareHandlers } from "./shareHandlers.js";
 
 const DEFAULT_WIDTH = 1180;
 const DEFAULT_HEIGHT = 820;
@@ -49,6 +50,7 @@ function createWindow(): void {
 void app.whenReady().then(() => {
   registerHandlers();
   registerPeerHandlers();
+  registerShareHandlers();
   createWindow();
 
   app.on("activate", () => {

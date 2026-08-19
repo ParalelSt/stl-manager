@@ -37,6 +37,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Controls follow the palette rather than the browser's default blue, which
+   the project's design rules rule out explicitly. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-accent);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-background);
+}
+
 /* The window is dragged by its title bar area, not by its content. */
 .drag-region {
   -webkit-app-region: drag;

@@ -7,3 +7,12 @@
  */
 export { createPeerRegistry, type Peer, type PeerRegistry } from "./peers.js";
 export { pullFromPeer, type PullOptions, type PullResult } from "./pull.js";
+export {
+  createShareRegistry,
+  DEFAULT_EXPIRY_MS,
+  DEFAULT_MAX_TOTAL_BYTES,
+  DEFAULT_MAX_UPLOAD_BYTES,
+  type Share,
+  type SharedFile,
+  type ShareRegistry,
+} from "./shares.js";

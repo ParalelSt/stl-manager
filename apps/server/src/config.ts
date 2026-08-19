@@ -7,6 +7,15 @@ export interface ServerConfig {
   configDir: string;
   /** Where files uploaded to a share land. Never inside a library. */
   dropDir: string;
+  /**
+   * Whether a proxy in front of this server may be believed about who is
+   * calling.
+   *
+   * Off by default. With it off, a request cannot claim to come from somewhere
+   * else by setting a header, which would otherwise defeat rate limiting
+   * entirely.
+   */
+  trustProxy: boolean;
 }
 
 const DEFAULT_PORT = 8080;
@@ -62,5 +71,6 @@ export function loadConfig(env: Record<string, string | undefined>): ServerConfi
     // Beneath the config directory by default, which is a volume the user
     // already knows about and which no library ever lives in.
     dropDir: env["STL_DROP_DIR"] ?? `${configDir}/drops`,
+    trustProxy: env["STL_TRUST_PROXY"] === "true",
   };
 }

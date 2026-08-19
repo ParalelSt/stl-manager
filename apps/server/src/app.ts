@@ -1,6 +1,6 @@
 import type { FileSystem, PathUtil } from "@stl-manager/core";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import type { ServerConfig } from "./config.js";
 import type { JobRegistry } from "./jobs.js";
 import { createApplyLock } from "./applyLock.js";
@@ -15,6 +15,7 @@ import { shareRoutes } from "./routes/share.js";
 import { createShareRegistry } from "./shares.js";
 import { createPeerRegistry } from "./peers.js";
 import { workRoutes } from "./routes/work.js";
+import { createAuthLimiter, type AuthLimiter } from "./rateLimit.js";
 import { isTokenValid } from "./token.js";
 
 /** Everything the application needs, supplied rather than read from anywhere. */
@@ -31,12 +32,37 @@ export interface AppOptions {
   webRoot?: string;
   /** Injected so a test can wire one server straight to another. */
   fetch?: typeof globalThis.fetch;
+  /** Supplied by tests that need to control the clock or the limits. */
+  limiter?: AuthLimiter;
 }
 
 /** The prefix every authenticated route sits under. */
 const API_PREFIX = "/api";
 
 const BEARER = "Bearer ";
+
+/**
+ * Works out who is calling, for rate limiting.
+ *
+ * A forwarded-for header is believed only when a proxy has been declared,
+ * because otherwise any caller could claim a fresh address on every attempt
+ * and never be limited at all.
+ */
+function clientAddress(context: Context, trustProxy: boolean): string {
+  if (trustProxy) {
+    const forwarded = context.req.header("X-Forwarded-For");
+    const first = forwarded?.split(",")[0]?.trim();
+    if (first !== undefined && first !== "") {
+      return first;
+    }
+  }
+  const socket: unknown = context.env;
+  if (typeof socket === "object" && socket !== null && "incoming" in socket) {
+    const incoming = (socket as { incoming?: { socket?: { remoteAddress?: string } } }).incoming;
+    return incoming?.socket?.remoteAddress ?? "unknown";
+  }
+  return "unknown";
+}
 
 function suppliedToken(header: string | undefined): string {
   if (header === undefined || !header.startsWith(BEARER)) {
@@ -64,13 +90,33 @@ export function createApp(options: AppOptions): Hono {
 
   // Share routes accept either token. The owner can obviously read their own
   // machine, and a paired machine may read only through here.
+  const limiter = options.limiter ?? createAuthLimiter();
+
+  function refuse(context: Context, address: string) {
+    limiter.recordFailure(address);
+    return context.json({ ok: false, error: "Not authorised." }, 401);
+  }
+
+  function tooMany(context: Context, address: string) {
+    return context.json(
+      { ok: false, error: "Too many attempts. Try again shortly." },
+      429,
+      { "Retry-After": String(limiter.retryAfterSeconds(address)) },
+    );
+  }
+
   app.use(`${API_PREFIX}/share/*`, async (context, next) => {
+    const address = clientAddress(context, options.config.trustProxy);
+    if (limiter.isBlocked(address)) {
+      return tooMany(context, address);
+    }
     const supplied = suppliedToken(context.req.header("Authorization"));
     const isAllowed =
       isTokenValid(supplied, options.shareToken) || isTokenValid(supplied, options.token);
     if (!isAllowed) {
-      return context.json({ ok: false, error: "Not authorised." }, 401);
+      return refuse(context, address);
     }
+    limiter.recordSuccess(address);
     await next();
     return undefined;
   });
@@ -83,12 +129,17 @@ export function createApp(options: AppOptions): Hono {
       await next();
       return undefined;
     }
+    const address = clientAddress(context, options.config.trustProxy);
+    if (limiter.isBlocked(address)) {
+      return tooMany(context, address);
+    }
     const supplied = suppliedToken(context.req.header("Authorization"));
     if (!isTokenValid(supplied, options.token)) {
       // Deliberately says nothing about why, so a refusal cannot be used to
       // learn anything about the expected token.
-      return context.json({ ok: false, error: "Not authorised." }, 401);
+      return refuse(context, address);
     }
+    limiter.recordSuccess(address);
     await next();
     return undefined;
   });

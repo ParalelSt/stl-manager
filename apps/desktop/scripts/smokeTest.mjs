@@ -29,14 +29,17 @@ const EXPECTED_BRIDGE_METHODS = [
   "applyPlan",
   "buildPlan",
   "chooseDirectory",
+  "createShare",
   "listPeers",
   "listRuns",
+  "listShares",
   "onProgress",
   "peerCatalogue",
   "pullFromPeer",
   "readLibrary",
   "removePeer",
   "revealInFinder",
+  "revokeShare",
   "undoRun",
 ];
 

@@ -6,7 +6,16 @@ them nothing else.
 
 ## Making a share
 
-From the interface, or over the API:
+In the application, open **Share**. Tick the files you want, name the link,
+choose whether it expires and whether the recipient may send files back, and
+press Share. The link appears immediately, and existing links are listed
+underneath with a Revoke next to each.
+
+The desktop application can make and revoke links, but only a running server can
+serve them: a link is an address, and the desktop app has none. Make links there
+if you want them reachable.
+
+Or over the API:
 
 ```
 POST /api/shares
@@ -74,3 +83,19 @@ address, both of which connect outward so nothing is opened on your router.
 Do not port-forward directly unless you understand what you are exposing. The
 share routes are designed to be reachable by strangers; the rest of the API is
 protected only by its token.
+
+## Guessing a token
+
+Repeated failed authentication from one address is refused with a 429 and a
+`Retry-After`, so a token cannot be guessed at speed. The block applies to the
+correct token as well while it lasts, since answering differently would tell an
+attacker which guess was right.
+
+A forwarded-for header is believed only when `STL_TRUST_PROXY=true` is set. With
+it off, a caller cannot claim a fresh address on every attempt and evade the
+limit entirely. Set it when the server genuinely sits behind a tunnel or proxy,
+and not otherwise.
+
+Public share links are deliberately not rate limited. They carry their secret in
+the URL and are meant for strangers; limiting them would let one person deny
+everyone else a file you shared.

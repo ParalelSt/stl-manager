@@ -2,6 +2,7 @@ import { ApplyScreen } from "./screens/ApplyScreen.js";
 import { HistoryScreen } from "./screens/HistoryScreen.js";
 import { LibraryScreen } from "./screens/LibraryScreen.js";
 import { PeersScreen } from "./screens/PeersScreen.js";
+import { SharesScreen } from "./screens/SharesScreen.js";
 import { ReviewScreen } from "./screens/ReviewScreen.js";
 import { ScanScreen } from "./screens/ScanScreen.js";
 import { SetupScreen } from "./screens/SetupScreen.js";
@@ -15,6 +16,7 @@ const SCREENS: Record<Screen, () => React.JSX.Element> = {
   [SCREEN.HISTORY]: HistoryScreen,
   [SCREEN.LIBRARY]: LibraryScreen,
   [SCREEN.PEERS]: PeersScreen,
+  [SCREEN.SHARES]: SharesScreen,
 };
 
 export function App() {
@@ -35,6 +37,15 @@ export function App() {
           className="text-muted hover:text-text text-xs tracking-wide uppercase"
         >
           Machines
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            goTo(SCREEN.SHARES);
+          }}
+          className="text-muted hover:text-text text-xs tracking-wide uppercase"
+        >
+          Share
         </button>
         <button
           type="button"

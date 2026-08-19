@@ -30,7 +30,7 @@ describe("share routes", () => {
     await writeFile(join(library, "kit", "kit_base.stl"), "base-mesh-contents");
     await writeFile(join(elsewhere, "private.stl"), "not shared");
 
-    const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config", dropDir: "/config/drops" };
+    const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config", dropDir: "/config/drops", trustProxy: false };
     app = createApp({
       config,
       token: TOKEN,

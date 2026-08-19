@@ -30,6 +30,9 @@ export const ipcTransport: Transport = {
   removePeer: (id) => window.stlManager.removePeer(id),
   peerCatalogue: (id) => window.stlManager.peerCatalogue(id),
   pullFromPeer: (request) => window.stlManager.pullFromPeer(request),
+  listShares: () => window.stlManager.listShares(),
+  createShare: (request) => window.stlManager.createShare(request),
+  revokeShare: (id) => window.stlManager.revokeShare(id),
   onProgress: (handler) => window.stlManager.onProgress(handler),
 };
 
