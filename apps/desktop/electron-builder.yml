@@ -33,6 +33,33 @@ mac:
   notarize: false
   gatekeeperAssess: false
 
+linux:
+  # The workspace name would otherwise put a slash in the filename.
+  artifactName: "STL-Manager-${version}-${arch}.${ext}"
+  # The workspace is called @stl-manager/desktop, which is not a usable name
+  # for a Linux binary, so the executable is named explicitly.
+  executableName: stl-manager
+  icon: build/icon.png
+  category: Utility
+  synopsis: Sort 3D model files into one structured library
+  target:
+    - target: AppImage
+      arch: [x64, arm64]
+    - target: deb
+      arch: [x64, arm64]
+
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: zip
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
 dmg:
   title: STL Manager
   contents:

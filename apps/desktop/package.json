@@ -11,7 +11,9 @@
     "start": "env -u ELECTRON_RUN_AS_NODE electron-vite preview",
     "test": "vitest run",
     "smoke": "env -u ELECTRON_RUN_AS_NODE electron scripts/smokeTest.mjs",
-    "package": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --mac"
+    "package": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --mac",
+    "package:linux": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --linux",
+    "package:win": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --win"
   },
   "dependencies": {
     "@stl-manager/contracts": "*",
@@ -36,5 +38,13 @@
     "zustand": "^5.0.15"
   },
   "description": "Finds 3D model files across your machine and sorts them into one structured library.",
-  "author": "aronmatoic"
+  "author": {
+    "name": "aronmatoic",
+    "email": "strixparalel@gmail.com"
+  },
+  "homepage": "https://github.com/ParalelSt/stl-manager",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ParalelSt/stl-manager.git"
+  }
 }
