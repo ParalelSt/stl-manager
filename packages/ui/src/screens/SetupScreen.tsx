@@ -16,14 +16,25 @@ export function SetupScreen() {
     start,
     isPickerOpen,
     resolvePicker,
+    missingRoots,
   } = useSetup();
 
-  const libraryValue =
-    libraryRoot === undefined ? (
-      <span className="text-muted">No folder chosen</span>
-    ) : (
-      <span className="font-mono text-sm">{libraryRoot}</span>
-    );
+  const isLibraryMissing = libraryRoot !== undefined && missingRoots.includes(libraryRoot);
+
+  const libraryValue = (() => {
+    if (libraryRoot === undefined) {
+      return <span className="text-muted">No folder chosen</span>;
+    }
+    if (isLibraryMissing) {
+      return (
+        <span className="min-w-0">
+          <span className="text-muted font-mono text-sm line-through">{libraryRoot}</span>
+          <span className="text-accent ml-3 text-xs">no longer there</span>
+        </span>
+      );
+    }
+    return <span className="font-mono text-sm">{libraryRoot}</span>;
+  })();
 
   const rootList =
     scanRoots.length === 0 ? (
@@ -36,7 +47,16 @@ export function SetupScreen() {
           <li key={root} className="flex items-center justify-between gap-6 py-3">
             <span className="flex min-w-0 items-center gap-3">
               <FolderIcon className="text-muted h-4 w-4 shrink-0" />
-              <span className="truncate font-mono text-sm">{root}</span>
+              <span
+                className={`truncate font-mono text-sm ${
+                  missingRoots.includes(root) ? "text-muted line-through" : ""
+                }`}
+              >
+                {root}
+              </span>
+              {missingRoots.includes(root) ? (
+                <span className="text-accent shrink-0 text-xs">no longer there</span>
+              ) : null}
             </span>
             <Button
               tone={BUTTON_TONE.QUIET}

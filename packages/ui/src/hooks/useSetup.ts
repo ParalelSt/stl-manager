@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { OperationResult } from "@stl-manager/contracts";
 import { useHost } from "../host.js";
 import { SCREEN, useAppStore } from "../store.js";
@@ -16,7 +16,7 @@ function isInsideLibrary(root: string, libraryRoot: string): boolean {
 
 /** Drives the setup screen: choosing the library and the folders to scan. */
 export function useSetup() {
-  const { chooseDirectory: chooseFromPlatform } = useHost();
+  const { transport, chooseDirectory: chooseFromPlatform } = useHost();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const pickerResolve = useRef<((path: string | undefined) => void) | undefined>(undefined);
 
@@ -49,6 +49,8 @@ export function useSetup() {
   const setLibraryRoot = useAppStore((state) => state.setLibraryRoot);
   const addScanRootToStore = useAppStore((state) => state.addScanRoot);
   const removeScanRoot = useAppStore((state) => state.removeScanRoot);
+  const missingRoots = useAppStore((state) => state.missingRoots);
+  const setMissingRoots = useAppStore((state) => state.setMissingRoots);
   const setError = useAppStore((state) => state.setError);
   const goTo = useAppStore((state) => state.goTo);
 
@@ -82,6 +84,30 @@ export function useSetup() {
     addScanRootToStore(chosen);
   }, [addScanRootToStore, libraryRoot, setError]);
 
+  /**
+   * Checks the remembered folders are still there.
+   *
+   * Folders are remembered between runs, so by the next launch one may have
+   * been deleted, renamed, or be on a drive that is not plugged in. Saying so
+   * is far better than a scan that quietly finds nothing.
+   */
+  useEffect(() => {
+    void (async () => {
+      const candidates = [...scanRoots, ...(libraryRoot === undefined ? [] : [libraryRoot])];
+      if (candidates.length === 0) {
+        setMissingRoots([]);
+        return;
+      }
+      const checks = await Promise.all(
+        candidates.map(async (root) => ({
+          root,
+          isThere: (await transport.listDirectories({ path: root })).ok,
+        })),
+      );
+      setMissingRoots(checks.filter((check) => !check.isThere).map((check) => check.root));
+    })();
+  }, [libraryRoot, scanRoots, setMissingRoots, transport]);
+
   const isReady = useMemo(
     () => libraryRoot !== undefined && scanRoots.length > 0,
     [libraryRoot, scanRoots.length],
@@ -104,5 +130,6 @@ export function useSetup() {
     start,
     isPickerOpen,
     resolvePicker,
+    missingRoots,
   };
 }

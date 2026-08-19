@@ -88,6 +88,17 @@ Undo replays that journal backwards. It never overwrites: if something already
 occupies a file's original location, that file is reported and skipped rather
 than replacing what is there.
 
+## What it remembers
+
+The library folder and the folders you scan are remembered between runs, so you
+choose them once. Nothing else is: a plan describes a moment rather than a
+choice, and restoring a half-finished run against files that may have moved
+since would be worse than starting cleanly.
+
+A remembered folder that has been deleted, renamed, or is on a drive that is not
+plugged in is shown struck through and marked "no longer there", rather than
+failing quietly when you next scan.
+
 ## Running the desktop application
 
 Requires Node 22 or newer.
