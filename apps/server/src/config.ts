@@ -16,9 +16,30 @@ export interface ServerConfig {
    * entirely.
    */
   trustProxy: boolean;
+  /**
+   * Which addresses the server answers on.
+   *
+   * Local only by default, so a fresh install is reachable from the machine it
+   * runs on and nowhere else. Opening it up is a deliberate act.
+   */
+  host: string;
+  /**
+   * Whether this server is meant to be reachable from outside the network.
+   *
+   * Turning it on relaxes nothing by itself. It exists so the server can say
+   * plainly what it is doing at startup, and can refuse the combinations that
+   * are almost certainly a mistake.
+   */
+  isRemote: boolean;
 }
 
 const DEFAULT_PORT = 8080;
+
+/** Only this machine. */
+const LOCAL_ONLY = "127.0.0.1";
+
+/** Every address, which is what a container and a LAN server both need. */
+const EVERYWHERE = "0.0.0.0";
 const DEFAULT_CONFIG_DIR = "/config";
 const LOWEST_PORT = 1;
 const HIGHEST_PORT = 65535;
@@ -64,6 +85,26 @@ export function loadConfig(env: Record<string, string | undefined>): ServerConfi
   }
 
   const configDir = env["STL_CONFIG_DIR"] ?? DEFAULT_CONFIG_DIR;
+
+  // Three settings, in increasing order of exposure, so the step from one to
+  // the next is a decision rather than a default.
+  const access = env["STL_ACCESS"] ?? "local";
+  if (!["local", "lan", "remote"].includes(access)) {
+    throw new Error('STL_ACCESS must be "local", "lan" or "remote".');
+  }
+  const isRemote = access === "remote";
+
+  if (isRemote && env["STL_TRUST_PROXY"] !== "true") {
+    // Remote access is meant to arrive through a tunnel or proxy. Without one,
+    // every request looks like it comes from the same address and the rate
+    // limiting on failed tokens protects nobody.
+    throw new Error(
+      'STL_ACCESS=remote expects a tunnel or proxy in front of the server, so ' +
+        "STL_TRUST_PROXY must be true. If you really are exposing this server " +
+        'directly, use STL_ACCESS=lan and understand what that means.',
+    );
+  }
+
   return {
     port: parsePort(env["PORT"]),
     roots,
@@ -72,5 +113,7 @@ export function loadConfig(env: Record<string, string | undefined>): ServerConfi
     // already knows about and which no library ever lives in.
     dropDir: env["STL_DROP_DIR"] ?? `${configDir}/drops`,
     trustProxy: env["STL_TRUST_PROXY"] === "true",
+    host: env["STL_HOST"] ?? (access === "local" ? LOCAL_ONLY : EVERYWHERE),
+    isRemote,
   };
 }

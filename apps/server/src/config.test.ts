@@ -43,3 +43,47 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ PORT: "70000", STL_ROOTS: "/data" })).toThrow(/PORT/);
   });
 });
+
+describe("who can reach the server", () => {
+  it("answers only this machine by default", () => {
+    expect(loadConfig({ STL_ROOTS: "/data" }).host).toBe("127.0.0.1");
+  });
+
+  it("answers the network when asked to", () => {
+    expect(loadConfig({ STL_ROOTS: "/data", STL_ACCESS: "lan" }).host).toBe("0.0.0.0");
+  });
+
+  it("answers the network for remote access too", () => {
+    const config = loadConfig({
+      STL_ROOTS: "/data",
+      STL_ACCESS: "remote",
+      STL_TRUST_PROXY: "true",
+    });
+    expect(config.host).toBe("0.0.0.0");
+    expect(config.isRemote).toBe(true);
+  });
+
+  it("refuses remote access without a proxy in front", () => {
+    // Otherwise every request looks like it comes from the tunnel, and the
+    // limit on failed tokens protects nobody.
+    expect(() => loadConfig({ STL_ROOTS: "/data", STL_ACCESS: "remote" })).toThrow(
+      /STL_TRUST_PROXY/,
+    );
+  });
+
+  it("refuses an access setting it does not recognise", () => {
+    expect(() => loadConfig({ STL_ROOTS: "/data", STL_ACCESS: "everyone" })).toThrow(
+      /STL_ACCESS/,
+    );
+  });
+
+  it("lets an explicit host override the setting", () => {
+    const config = loadConfig({ STL_ROOTS: "/data", STL_HOST: "192.168.1.5" });
+    expect(config.host).toBe("192.168.1.5");
+  });
+
+  it("is not remote unless asked", () => {
+    expect(loadConfig({ STL_ROOTS: "/data" }).isRemote).toBe(false);
+    expect(loadConfig({ STL_ROOTS: "/data", STL_ACCESS: "lan" }).isRemote).toBe(false);
+  });
+});
