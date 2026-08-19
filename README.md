@@ -134,15 +134,32 @@ rules. Read-only: the application asks for a scope that cannot change anything
 in your Drive. Setting it up needs your own Google OAuth client. See
 `docs/google-drive.md`.
 
-## Building a Mac application
+## Downloads
+
+Each release carries an application for every operating system and a container
+image for both architectures:
+
+| Platform | File |
+| --- | --- |
+| macOS | `.dmg`, Apple Silicon and Intel |
+| Linux | `.AppImage` and `.deb`, x64 and arm64 |
+| Windows | `.exe` installer and a `.zip` |
+| Any | `ghcr.io/paralelst/stl-manager` |
+
+Building them yourself:
 
 ```
-npm run package -w apps/desktop
+npm run package -w apps/desktop        # macOS
+npm run package:linux -w apps/desktop  # Linux
+npm run package:win -w apps/desktop    # Windows
 ```
 
-Produces a signed `STL Manager.app` in a `.dmg` under `apps/desktop/release/`,
-for both Apple Silicon and Intel. Notarising it as well takes one extra setup
-step, described in `docs/packaging-the-app.md`.
+Results land in `apps/desktop/release/`. The macOS build signs with a
+Developer ID if one is in your keychain; notarising takes one extra setup step,
+described in `docs/packaging-the-app.md`.
+
+Pushing a tag such as `v0.2.0` builds all of them on their own operating
+systems and attaches them to a GitHub release.
 
 ## Running the server
 

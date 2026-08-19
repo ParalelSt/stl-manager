@@ -15,6 +15,13 @@ services:
       # Only these paths are readable, and they are container paths, not host
       # paths. Everything below must also appear as a volume above.
       STL_ROOTS: /data
+      # local  reachable only from inside the container, which is rarely useful
+      # lan    reachable from your network. The default for the image
+      # remote  reachable through a tunnel; requires STL_TRUST_PROXY below
+      STL_ACCESS: lan
+      # Believe the address a proxy or tunnel reports. Only turn this on when
+      # there really is one, or the limit on failed tokens protects nobody.
+      # STL_TRUST_PROXY: "true"
     volumes:
       - /home/me/models:/data/models
       - /home/me/downloads:/data/downloads

@@ -179,24 +179,60 @@ export function deriveMoves(model: PlanModel, path: PathUtil): PlannedMove[] {
     }
     const folder = folderFor(group, model.libraryRoot, path);
 
+    // A family holds several models, and a model can be several files: a mesh,
+    // its supports, a preview, a slicer file. Those belong together in a
+    // folder of their own. A model that is a single file does not need one,
+    // which is what keeps a family of ten lone models from becoming ten
+    // folders holding one file each.
+    const byModel = new Map<string, { kept: ScannedFile[]; companions: ScannedFile[] }>();
     for (const file of group.kept) {
-      moves.push({
-        from: file.path,
-        to: destinations.claim(folder, cleanStem(file.stem), file.ext),
-        groupId: group.id,
-        reason: MOVE_REASON.MODEL,
-        size: file.size,
-      });
+      const key = toNameKey(file.stem);
+      const entry = byModel.get(key) ?? { kept: [], companions: [] };
+      entry.kept.push(file);
+      byModel.set(key, entry);
+    }
+    for (const companion of group.companions) {
+      const key = toNameKey(companion.stem);
+      const entry = byModel.get(key) ?? { kept: [], companions: [] };
+      entry.companions.push(companion);
+      byModel.set(key, entry);
     }
 
-    for (const companion of group.companions) {
-      moves.push({
-        from: companion.path,
-        to: destinations.claim(folder, companion.stem, companion.ext),
-        groupId: group.id,
-        reason: MOVE_REASON.COMPANION,
-        size: companion.size,
-      });
+    for (const entry of byModel.values()) {
+      const first = entry.kept[0] ?? entry.companions[0];
+      if (first === undefined) {
+        continue;
+      }
+      const modelName = cleanStem(first.stem);
+      const total = entry.kept.length + entry.companions.length;
+
+      // A model gets its own folder only when it is several files AND the
+      // family holds more than one model. A family of one model is already
+      // that model's folder, and nesting again would give space_marine a
+      // space_marine folder inside a space_marine folder.
+      const needsOwnFolder =
+        total > 1 && byModel.size > 1 && modelName.toLowerCase() !== group.displayName.toLowerCase();
+      const home = needsOwnFolder ? path.join(folder, modelName) : folder;
+
+      for (const file of entry.kept) {
+        moves.push({
+          from: file.path,
+          to: destinations.claim(home, cleanStem(file.stem), file.ext),
+          groupId: group.id,
+          reason: MOVE_REASON.MODEL,
+          size: file.size,
+        });
+      }
+
+      for (const companion of entry.companions) {
+        moves.push({
+          from: companion.path,
+          to: destinations.claim(home, companion.stem, companion.ext),
+          groupId: group.id,
+          reason: MOVE_REASON.COMPANION,
+          size: companion.size,
+        });
+      }
     }
 
     // Quarantined copies keep their original filename, because the point of the

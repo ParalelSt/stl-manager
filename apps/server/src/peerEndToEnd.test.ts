@@ -193,8 +193,10 @@ describe("two machines sharing", () => {
     // Filed by my grouping, not by theirs: the two models share a first word,
     // so they land in one family folder rather than the two the peer used.
     expect(await libraryTree(mineLibrary)).toEqual([
-      "ruined/ruined_tower.jpg",
-      "ruined/ruined_tower.stl",
+      // ruined_tower is a mesh and a preview, so the two travel together in a
+      // folder of their own. ruined_wall is a single file and needs none.
+      "ruined/ruined_tower/ruined_tower.jpg",
+      "ruined/ruined_tower/ruined_tower.stl",
       "ruined/ruined_wall.stl",
     ]);
 

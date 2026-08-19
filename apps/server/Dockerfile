@@ -33,7 +33,11 @@ RUN apt-get update \
 
 ENV NODE_ENV=production \
     PORT=8080 \
-    STL_CONFIG_DIR=/config
+    STL_CONFIG_DIR=/config \
+    # A container that answered only its own loopback would be unreachable
+    # from the host, so the image asks for the network by default. Going
+    # further, to remote, is still a deliberate choice in compose.
+    STL_ACCESS=lan
 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json

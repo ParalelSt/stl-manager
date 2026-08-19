@@ -73,7 +73,7 @@ describe("a realistic collection over HTTP", () => {
     // Never collected.
     await write("Notes/taxes.docx", "unrelated");
 
-    const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config", dropDir: "/config/drops", trustProxy: false };
+    const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config", dropDir: "/config/drops", trustProxy: false, host: "127.0.0.1", isRemote: false };
     const app = createApp({ config, token: TOKEN, shareToken: SHARE_TOKEN, fs: new NodeFileSystem(), path: posixPath });
     transport = createHttpTransport({
       baseUrl: "http://server",
@@ -110,9 +110,11 @@ describe("a realistic collection over HTTP", () => {
 
     expect(sorted).toEqual(
       [
-        // A family named after the words its members share.
-        "ruined/ruined_tower.stl",
-        "ruined/ruined_tower.jpg",
+        // A family named after the words its members share. The tower is a
+        // mesh and a preview, so those travel together in a folder of their
+        // own; the wall is a single file and needs none.
+        "ruined/ruined_tower/ruined_tower.stl",
+        "ruined/ruined_tower/ruined_tower.jpg",
         "ruined/ruined_wall.stl",
         // Same name, different contents, so both are kept.
         "orc bust/orc bust (2).stl",

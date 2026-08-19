@@ -6,7 +6,7 @@ import type { ServerConfig } from "./config.js";
 
 const TOKEN = "a".repeat(64);
 const SHARE_TOKEN = "s".repeat(64);
-const CONFIG: ServerConfig = { port: 8080, roots: ["/data"], configDir: "/config", dropDir: "/config/drops", trustProxy: false };
+const CONFIG: ServerConfig = { port: 8080, roots: ["/data"], configDir: "/config", dropDir: "/config/drops", trustProxy: false, host: "127.0.0.1", isRemote: false };
 
 /**
  * The rule that makes a share token safe to hand to another machine.

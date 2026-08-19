@@ -47,6 +47,9 @@ paths, so following it rather than typing a path avoids the problem entirely.
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `STL_ROOTS` | none, required | Colon-separated absolute paths the server may read and write |
+| `STL_ACCESS` | `local` | Who can reach it: `local`, `lan`, or `remote` |
+| `STL_HOST` | from `STL_ACCESS` | Override the address to listen on |
+| `STL_TRUST_PROXY` | `false` | Believe the address a proxy reports. Required for `remote` |
 | `PORT` | `8080` | Port to listen on |
 | `STL_CONFIG_DIR` | `/config` | Where the access token is kept |
 | `PUID` | `1000` | User id the server runs as |
@@ -59,6 +62,31 @@ one mistake away from reorganising a whole machine.
 Nothing outside `STL_ROOTS` can be read or written, whatever a request asks
 for. Paths are resolved through the filesystem before being checked, so neither
 `..` nor a symbolic link can be used to step outside them.
+
+## Who can reach it
+
+Three settings, in increasing order of exposure, so each step is a decision
+rather than a default.
+
+- **`local`** answers only the machine it runs on. The default, so a fresh
+  install is not on your network by accident.
+- **`lan`** answers your local network. What the Docker image sets, since a
+  container answering only its own loopback would be unreachable from the host.
+- **`remote`** is the same as `lan`, and additionally declares that a tunnel is
+  in front. It refuses to start without `STL_TRUST_PROXY=true`, because without
+  a proxy every request looks like it comes from the same address and the limit
+  on failed tokens protects nobody.
+
+The server says which one it is using when it starts:
+
+```
+STL Manager listening on 127.0.0.1:8080
+Reachable from: this machine only. Set STL_ACCESS=lan to open it up.
+```
+
+Setting `remote` opens no ports and configures no tunnel. Use Cloudflare Tunnel
+or Tailscale Funnel for that; both connect outward, so nothing is opened on your
+router.
 
 ## File ownership
 

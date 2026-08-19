@@ -29,7 +29,7 @@ describe("browsing", () => {
     await mkdir(outside, { recursive: true });
     await writeFile(join(root, "notes.txt"), "not a directory");
 
-    const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config", dropDir: "/config/drops", trustProxy: false };
+    const config: ServerConfig = { port: 8080, roots: [root], configDir: "/config", dropDir: "/config/drops", trustProxy: false, host: "127.0.0.1", isRemote: false };
     app = createApp({ config, token: TOKEN, shareToken: SHARE_TOKEN, fs: new NodeFileSystem(), path: posixPath });
   });
 
