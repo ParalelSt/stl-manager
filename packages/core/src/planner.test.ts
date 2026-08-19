@@ -189,3 +189,63 @@ describe("naming files inside a family", () => {
     expect(result.moves.filter((move) => move.reason === "duplicate")).toHaveLength(1);
   });
 });
+
+describe("giving a model its own folder", () => {
+  it("nests a model that is several files, inside a family of several models", async () => {
+    const result = await buildPlan({
+      "/home/Set/cam_medium.stl": { content: "medium" },
+      "/home/Set/cam_medium.jpg": { content: "preview" },
+      "/home/Set/cam_mild.stl": { content: "mild" },
+    });
+    expect(result.moves.map((move) => move.to).sort()).toEqual([
+      // Several files, so they travel together in a folder of their own.
+      "/lib/cam/cam_medium/cam_medium.jpg",
+      "/lib/cam/cam_medium/cam_medium.stl",
+      // A lone file needs no folder.
+      "/lib/cam/cam_mild.stl",
+    ]);
+  });
+
+  it("does not nest when every model in the family is a single file", async () => {
+    const result = await buildPlan({
+      "/home/Set/cam_medium.stl": { content: "medium" },
+      "/home/Set/cam_mild.stl": { content: "mild" },
+    });
+    expect(result.moves.map((move) => move.to).sort()).toEqual([
+      "/lib/cam/cam_medium.stl",
+      "/lib/cam/cam_mild.stl",
+    ]);
+  });
+
+  it("does not repeat the name when the family holds one model", async () => {
+    const result = await buildPlan({
+      "/home/Set/space_marine.stl": { content: "mesh" },
+      "/home/Set/space_marine.jpg": { content: "preview" },
+    });
+    // Not /lib/space_marine/space_marine/space_marine.stl.
+    expect(result.moves.map((move) => move.to).sort()).toEqual([
+      "/lib/space_marine/space_marine.jpg",
+      "/lib/space_marine/space_marine.stl",
+    ]);
+  });
+
+  it("keeps a slicer file with the model it belongs to", async () => {
+    const result = await buildPlan({
+      "/home/Set/cam_medium.stl": { content: "medium" },
+      "/home/Set/cam_medium.ctb": { content: "sliced" },
+      "/home/Set/cam_mild.stl": { content: "mild" },
+    });
+    expect(result.moves.map((move) => move.to)).toContain("/lib/cam/cam_medium/cam_medium.ctb");
+  });
+
+  it("still quarantines duplicates rather than nesting them", async () => {
+    const result = await buildPlan({
+      "/home/Set/cam_medium.stl": { content: "same" },
+      "/home/Set/cam_medium (1).stl": { content: "same" },
+      "/home/Set/cam_mild.stl": { content: "mild" },
+    });
+    const quarantined = result.moves.filter((move) => move.reason === "duplicate");
+    expect(quarantined).toHaveLength(1);
+    expect(quarantined[0]?.to).toContain("_Duplicates");
+  });
+});
