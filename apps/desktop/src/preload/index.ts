@@ -29,6 +29,9 @@ const api = {
   peerCatalogue: (id: unknown): Promise<unknown> => ipcRenderer.invoke("peerCatalogue", id),
   pullFromPeer: (request: unknown): Promise<unknown> =>
     ipcRenderer.invoke("pullFromPeer", request),
+  listShares: (): Promise<unknown> => ipcRenderer.invoke("listShares"),
+  createShare: (request: unknown): Promise<unknown> => ipcRenderer.invoke("createShare", request),
+  revokeShare: (id: unknown): Promise<unknown> => ipcRenderer.invoke("revokeShare", id),
   onProgress: (handler: (progress: ProgressEvent) => void): (() => void) => {
     const listener = (_event: unknown, progress: ProgressEvent): void => {
       handler(progress);

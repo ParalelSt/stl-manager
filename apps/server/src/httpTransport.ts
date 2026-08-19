@@ -136,6 +136,11 @@ export function createHttpTransport(options: HttpTransportOptions): Transport {
     pullFromPeer: ({ peerId, ...body }) =>
       startAndAwait(`/api/peers/${peerId}/pulls`, body),
 
+    listShares: () => request("/api/shares"),
+    createShare: (body) =>
+      request("/api/shares", { method: "POST", body: JSON.stringify(body) }),
+    revokeShare: (id) => request(`/api/shares/${id}`, { method: "DELETE" }),
+
     // A browser has no file manager to reveal anything in, so this is a no-op
     // rather than a missing method: the interface can call it unconditionally.
     revealInFinder: async () => ({ ok: true, value: undefined }),
