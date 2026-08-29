@@ -11,6 +11,7 @@ export function useScan() {
   const { transport } = useHost();
   const libraryRoot = useAppStore((state) => state.libraryRoot);
   const scanRoots = useAppStore((state) => state.scanRoots);
+  const profile = useAppStore((state) => state.profile);
   const progress = useAppStore((state) => state.progress);
   const error = useAppStore((state) => state.error);
   const setPlan = useAppStore((state) => state.setPlan);
@@ -33,7 +34,7 @@ export function useScan() {
     });
 
     try {
-      const result = await transport.buildPlan({ roots: scanRoots, libraryRoot });
+      const result = await transport.buildPlan({ roots: scanRoots, libraryRoot, profile });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -44,7 +45,7 @@ export function useScan() {
       unsubscribe();
       setIsScanning(false);
     }
-  }, [goTo, libraryRoot, scanRoots, setError, setPlan, setProgress]);
+  }, [goTo, libraryRoot, profile, scanRoots, setError, setPlan, setProgress]);
 
   useEffect(() => {
     if (hasStarted.current) {

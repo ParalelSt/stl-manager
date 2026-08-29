@@ -23,10 +23,25 @@ export const IPC_CHANNEL = {
 /** One of the operation names. */
 export type IpcChannel = (typeof IPC_CHANNEL)[keyof typeof IPC_CHANNEL];
 
-/** A scan and plan request. */
+/**
+ * The library layouts a scan can be asked for.
+ *
+ * Spelled out rather than imported from the engine, which this package does not
+ * depend on, in the same way move reasons are below. The engine owns the
+ * meaning; this owns only what is accepted over a transport.
+ */
+export const sortingProfileSchema = z.enum(["family", "name", "source", "type"]);
+
+/**
+ * A scan and plan request.
+ *
+ * The layout is optional, so a client that predates it still gets the default
+ * rather than a rejected request.
+ */
 export const buildPlanRequestSchema = z.object({
   roots: z.array(z.string().min(1)).min(1),
   libraryRoot: z.string().min(1),
+  profile: sortingProfileSchema.default("family"),
 });
 
 /** Validated shape of a plan request. */

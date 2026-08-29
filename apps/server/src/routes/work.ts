@@ -10,6 +10,7 @@ import {
 } from "@stl-manager/contracts";
 import {
   apply,
+  DEFAULT_SORTING_PROFILE,
   Journal,
   plan,
   readLibraryTree,
@@ -94,6 +95,7 @@ export function workRoutes(options: WorkOptions): Hono {
         path,
         roots,
         libraryRoot,
+        profile: parsed.value.profile,
         onProgress: (done, currentPath) => {
           report({ kind: PROGRESS_KIND.SCAN, done, total: undefined, currentPath });
         },
@@ -132,7 +134,18 @@ export function workRoutes(options: WorkOptions): Hono {
         const result = await apply({
           fs,
           path,
-          plan: { libraryRoot, scanRoots: [], occupied: [], moves, groups: [], untouched: [], problems: [] },
+          // The moves are the whole of an apply: everything the layout decided
+          // has already become these paths, so the rest of a plan is empty.
+          plan: {
+            libraryRoot,
+            profile: DEFAULT_SORTING_PROFILE,
+            scanRoots: [],
+            occupied: [],
+            moves,
+            groups: [],
+            untouched: [],
+            problems: [],
+          },
           journal: new Journal(fs, path, libraryRoot),
           runId,
           onProgress: (done, total, currentPath) => {

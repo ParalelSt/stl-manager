@@ -61,6 +61,13 @@ export { posixPath } from "./posixPath.js";
 export { readLibraryTree } from "./readLibraryTree.js";
 export { scan, type ScanOptions, type ScanResult } from "./scanner.js";
 export {
+  DEFAULT_SORTING_PROFILE,
+  isSortingProfile,
+  SORTING_PROFILE,
+  SORTING_PROFILES,
+  type SortingProfile,
+} from "./sortingProfile.js";
+export {
   FILE_KIND,
   PIPELINE_STAGE,
   type FileKind,

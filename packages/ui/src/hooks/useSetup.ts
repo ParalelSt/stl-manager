@@ -49,6 +49,8 @@ export function useSetup() {
   const setLibraryRoot = useAppStore((state) => state.setLibraryRoot);
   const addScanRootToStore = useAppStore((state) => state.addScanRoot);
   const removeScanRoot = useAppStore((state) => state.removeScanRoot);
+  const profile = useAppStore((state) => state.profile);
+  const setProfile = useAppStore((state) => state.setProfile);
   const missingRoots = useAppStore((state) => state.missingRoots);
   const setMissingRoots = useAppStore((state) => state.setMissingRoots);
   const setError = useAppStore((state) => state.setError);
@@ -122,6 +124,8 @@ export function useSetup() {
   return {
     libraryRoot,
     scanRoots,
+    profile,
+    setProfile,
     error,
     isReady,
     chooseLibraryRoot,

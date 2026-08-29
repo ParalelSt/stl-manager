@@ -1,6 +1,7 @@
 import { Button, BUTTON_TONE } from "../components/Button.js";
 import { DirectoryPicker } from "../components/DirectoryPicker.js";
 import { FolderIcon } from "../components/icons/FolderIcon.js";
+import { LayoutChooser } from "../components/LayoutChooser.js";
 import { WarningIcon } from "../components/icons/WarningIcon.js";
 import { useSetup } from "../hooks/useSetup.js";
 
@@ -8,6 +9,8 @@ export function SetupScreen() {
   const {
     libraryRoot,
     scanRoots,
+    profile,
+    setProfile,
     error,
     isReady,
     chooseLibraryRoot,
@@ -98,7 +101,7 @@ export function SetupScreen() {
       <section className="col-span-12 mb-14 md:col-span-8 md:col-start-1">
         <h2 className="font-serif text-2xl">The library</h2>
         <p className="text-muted mt-2 max-w-prose text-sm">
-          Every model found is moved here, sorted into folders by name and purpose.
+          Every model found is moved here, sorted into folders by name.
         </p>
         <div className="border-border bg-surface mt-6 flex items-center justify-between gap-6 border p-4">
           {libraryValue}
@@ -108,7 +111,7 @@ export function SetupScreen() {
         </div>
       </section>
 
-      <section className="col-span-12 md:col-span-10">
+      <section className="col-span-12 mb-14 md:col-span-10">
         <div className="flex items-baseline justify-between gap-6">
           <h2 className="font-serif text-2xl">Folders to search</h2>
           <Button onClick={() => void addScanRoot()}>Add folder</Button>
@@ -118,6 +121,15 @@ export function SetupScreen() {
         </p>
         <div className="mt-6">{rootList}</div>
         {errorNote}
+      </section>
+
+      <section className="col-span-12 md:col-span-10">
+        <h2 className="font-serif text-2xl">How to sort them</h2>
+        <p className="text-muted mt-2 max-w-prose text-sm">
+          Names decide what every folder is called. This decides how much they are allowed to
+          pull together, and what sits above them. You can change it and scan again.
+        </p>
+        <LayoutChooser chosen={profile} onChoose={setProfile} />
       </section>
 
       <footer className="col-span-12 mt-16 flex items-center gap-6">

@@ -1,7 +1,10 @@
+import { DEFAULT_SORTING_PROFILE, isSortingProfile, type SortingProfile } from "@stl-manager/core";
+
 /** What survives closing the application. */
 export interface RememberedChoices {
   libraryRoot: string | undefined;
   scanRoots: string[];
+  profile: SortingProfile;
 }
 
 /** Where the choices are kept between visits. */
@@ -12,24 +15,33 @@ export const STORAGE_KEY = "stl-manager-choices";
  *
  * Anything stored under a different version is discarded rather than guessed
  * at. Folder choices are cheap to make again and expensive to get wrong.
+ *
+ * Unchanged when the layout was added, because a stored shape without one
+ * still reads correctly: it falls back to the default. Bumping this would have
+ * thrown away everyone's folders to add a field with an answer already.
  */
 export const STORAGE_VERSION = 1;
 
 /**
  * Picks the parts of the state worth remembering.
  *
- * Only the folders. The plan, progress and current screen all describe a
- * moment rather than a choice, and restoring a half-finished run would be
- * worse than starting cleanly.
+ * The folders and the layout. The plan, progress and current screen all
+ * describe a moment rather than a choice, and restoring a half-finished run
+ * would be worse than starting cleanly.
  *
  * @param state - The current application state
- * @returns Just the folders
+ * @returns The choices worth keeping
  */
 export function rememberedFrom(state: {
   libraryRoot: string | undefined;
   scanRoots: string[];
+  profile: SortingProfile;
 }): RememberedChoices {
-  return { libraryRoot: state.libraryRoot, scanRoots: state.scanRoots };
+  return {
+    libraryRoot: state.libraryRoot,
+    scanRoots: state.scanRoots,
+    profile: state.profile,
+  };
 }
 
 /**
@@ -43,7 +55,11 @@ export function rememberedFrom(state: {
  * @returns The choices, with anything unusable dropped
  */
 export function toRemembered(value: unknown): RememberedChoices {
-  const empty: RememberedChoices = { libraryRoot: undefined, scanRoots: [] };
+  const empty: RememberedChoices = {
+    libraryRoot: undefined,
+    scanRoots: [],
+    profile: DEFAULT_SORTING_PROFILE,
+  };
   if (typeof value !== "object" || value === null) {
     return empty;
   }
@@ -51,6 +67,7 @@ export function toRemembered(value: unknown): RememberedChoices {
   const record: Record<string, unknown> = { ...value };
   const libraryRoot = record["libraryRoot"];
   const scanRoots = record["scanRoots"];
+  const profile = record["profile"];
 
   return {
     libraryRoot:
@@ -58,5 +75,9 @@ export function toRemembered(value: unknown): RememberedChoices {
     scanRoots: Array.isArray(scanRoots)
       ? [...new Set(scanRoots.filter((root): root is string => typeof root === "string" && root !== ""))]
       : [],
+    profile:
+      typeof profile === "string" && isSortingProfile(profile)
+        ? profile
+        : DEFAULT_SORTING_PROFILE,
   };
 }

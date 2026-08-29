@@ -12,11 +12,32 @@ describe("parseRequest", () => {
     const result = parseRequest(buildPlanRequestSchema, {
       roots: ["/home/me"],
       libraryRoot: "/home/me/Library",
+      profile: "type",
     });
     expect(result).toEqual({
       ok: true,
-      value: { roots: ["/home/me"], libraryRoot: "/home/me/Library" },
+      value: { roots: ["/home/me"], libraryRoot: "/home/me/Library", profile: "type" },
     });
+  });
+
+  it("falls back to the default layout when a plan request names none", () => {
+    const result = parseRequest(buildPlanRequestSchema, {
+      roots: ["/home/me"],
+      libraryRoot: "/home/me/Library",
+    });
+    expect(result).toEqual({
+      ok: true,
+      value: { roots: ["/home/me"], libraryRoot: "/home/me/Library", profile: "family" },
+    });
+  });
+
+  it("rejects a plan request naming a layout that does not exist", () => {
+    const result = parseRequest(buildPlanRequestSchema, {
+      roots: ["/home/me"],
+      libraryRoot: "/home/me/Library",
+      profile: "whatever",
+    });
+    expect(result.ok).toBe(false);
   });
 
   it("rejects a plan request with no roots", () => {
