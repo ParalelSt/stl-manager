@@ -93,6 +93,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
+          # Only the packages. The build step also leaves behind a build-record
+          # artifact, which is not part of a release.
+          pattern: desktop-*
           path: artifacts
       - uses: softprops/action-gh-release@v2
         with:

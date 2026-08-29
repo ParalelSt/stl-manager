@@ -19,10 +19,10 @@ files:
 mac:
   category: public.app-category.utilities
   icon: build/icon.icns
+  # A dmg only. The zip target exists to feed an auto-updater, and there is
+  # no updater here, so it would only double the size of every release.
   target:
     - target: dmg
-      arch: [arm64, x64]
-    - target: zip
       arch: [arm64, x64]
   # Required for notarisation.
   hardenedRuntime: true
