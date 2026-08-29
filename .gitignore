@@ -17,6 +17,9 @@ node_modules/
 dist/
 out/
 build/
+# The desktop packaging assets are inputs, not output: the icon, the
+# entitlements and the notarisation hook are needed to build a release.
+!apps/desktop/build/
 *.tsbuildinfo
 
 # Electron packaging

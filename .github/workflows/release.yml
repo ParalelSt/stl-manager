@@ -22,13 +22,13 @@ jobs:
       # One failing platform should not hide whether the others built.
       fail-fast: false
       matrix:
+        # macOS and Linux only. The engine's path handling is POSIX throughout,
+        # so a Windows build would mis-sort rather than merely be untested.
         include:
           - os: macos-latest
             script: package
           - os: ubuntu-latest
             script: package:linux
-          - os: windows-latest
-            script: package:win
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -12,8 +12,7 @@
     "test": "vitest run --passWithNoTests",
     "smoke": "env -u ELECTRON_RUN_AS_NODE electron scripts/smokeTest.mjs",
     "package": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --mac",
-    "package:linux": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --linux",
-    "package:win": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --win"
+    "package:linux": "npm run build && env -u ELECTRON_RUN_AS_NODE electron-builder --linux"
   },
   "dependencies": {
     "@stl-manager/contracts": "*",
