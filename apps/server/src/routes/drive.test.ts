@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, readdir, readFile, realpath, rm } from "node:fs/promises";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, readdir, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { posixPath } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -52,7 +53,7 @@ describe("Google Drive", () => {
   }
 
   beforeEach(async () => {
-    base = await realpath(await mkdtemp("/tmp/stl-drive-"));
+    base = await makeTempDir("stl-drive");
     root = join(base, "data");
     staging = join(root, "_Incoming");
     configDir = join(base, "config");

@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, readdir, realpath, rm, writeFile } from "node:fs/promises";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { posixPath } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -48,7 +49,7 @@ describe("a realistic collection over HTTP", () => {
   beforeEach(async () => {
     // Not the system temp directory: on macOS that resolves under /private/var,
     // which the scanner excludes as system state.
-    base = await realpath(await mkdtemp("/tmp/stl-e2e-"));
+    base = await makeTempDir("stl-e2e");
     root = join(base, "data");
     source = join(root, "collection");
     library = join(root, "library");

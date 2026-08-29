@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { posixPath } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -42,7 +43,7 @@ describe("work routes", () => {
     // Deliberately not the system temp directory: on macOS that resolves to
     // /private/var, which the scanner excludes as system state, so a fixture
     // placed there would be invisible to a scan.
-    base = await realpath(await mkdtemp("/tmp/stl-work-"));
+    base = await makeTempDir("stl-work");
     root = join(base, "data");
     source = join(root, "downloads");
     library = join(root, "library");

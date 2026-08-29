@@ -1,6 +1,6 @@
+import { makeTempDir } from "./testing.js";
 import { createHash } from "node:crypto";
-import { mkdtemp, rm, symlink, writeFile, mkdir } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { rm, symlink, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { NodeFileSystem } from "./nodeFileSystem.js";
@@ -10,7 +10,7 @@ describe("NodeFileSystem", () => {
   const fs = new NodeFileSystem();
 
   beforeEach(async () => {
-    root = await mkdtemp(join(tmpdir(), "stl-manager-test-"));
+    root = await makeTempDir("stl-manager-test");
   });
 
   afterEach(async () => {

@@ -34,7 +34,11 @@ export default tseslint.config(
     // implement the same interface in a later phase. nodeFileSystem.ts is the
     // single permitted implementation, and tests may set up real fixtures.
     files: ["packages/core/src/**/*.ts"],
-    ignores: ["packages/core/src/nodeFileSystem.ts", "packages/core/src/**/*.test.ts"],
+    ignores: [
+      "packages/core/src/nodeFileSystem.ts",
+      "packages/core/src/tempDir.ts",
+      "packages/core/src/**/*.test.ts",
+    ],
     rules: {
       "no-restricted-imports": [
         "error",

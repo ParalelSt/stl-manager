@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { posixPath } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -21,7 +22,7 @@ describe("share routes", () => {
   }
 
   beforeEach(async () => {
-    base = await realpath(await mkdtemp("/tmp/stl-share-"));
+    base = await makeTempDir("stl-share");
     root = join(base, "data");
     library = join(root, "library");
     elsewhere = join(root, "downloads");

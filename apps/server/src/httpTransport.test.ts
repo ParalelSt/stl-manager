@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { posixPath } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -34,7 +35,7 @@ describe("httpTransport", () => {
   }
 
   beforeEach(async () => {
-    base = await realpath(await mkdtemp("/tmp/stl-transport-"));
+    base = await makeTempDir("stl-transport");
     root = join(base, "data");
     source = join(root, "downloads");
     library = join(root, "library");

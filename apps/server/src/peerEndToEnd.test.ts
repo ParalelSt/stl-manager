@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, readdir, realpath, rm, writeFile } from "node:fs/promises";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { posixPath, type TreeFile, type TreeFolder, type TreeNode } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -72,7 +73,7 @@ describe("two machines sharing", () => {
   }
 
   beforeEach(async () => {
-    base = await realpath(await mkdtemp("/tmp/stl-peer-e2e-"));
+    base = await makeTempDir("stl-peer-e2e");
     mineRoot = join(base, "mine");
     mineLibrary = join(mineRoot, "library");
     mineStaging = join(mineRoot, "_Incoming");

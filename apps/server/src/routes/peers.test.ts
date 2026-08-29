@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, readdir, realpath, rm, writeFile } from "node:fs/promises";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { posixPath } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -64,7 +65,7 @@ describe("peers", () => {
   }
 
   beforeEach(async () => {
-    base = await realpath(await mkdtemp("/tmp/stl-peers-"));
+    base = await makeTempDir("stl-peers");
     mineRoot = join(base, "mine");
     mineLibrary = join(mineRoot, "library");
     mineStaging = join(mineRoot, "_Incoming");

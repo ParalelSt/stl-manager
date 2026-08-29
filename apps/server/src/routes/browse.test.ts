@@ -1,5 +1,5 @@
-import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { posixPath } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -21,7 +21,7 @@ describe("browsing", () => {
   }
 
   beforeEach(async () => {
-    base = await realpath(await mkdtemp(join(tmpdir(), "stl-browse-")));
+    base = await makeTempDir("stl-browse");
     root = join(base, "data");
     outside = join(base, "secret");
     await mkdir(join(root, "models", "terrain"), { recursive: true });

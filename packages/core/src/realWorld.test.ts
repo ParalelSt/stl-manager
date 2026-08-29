@@ -1,5 +1,5 @@
-import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { makeTempDir } from "./testing.js";
+import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { apply } from "./applier.js";
@@ -43,7 +43,7 @@ describe("a realistic collection", () => {
   }
 
   beforeEach(async () => {
-    root = await mkdtemp(join(tmpdir(), "stl-manager-real-"));
+    root = await makeTempDir("stl-manager-real");
     source = join(root, "source");
     library = join(root, "library");
     await mkdir(library, { recursive: true });
