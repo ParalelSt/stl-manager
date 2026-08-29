@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   apply,
+  DEFAULT_SORTING_PROFILE,
   Journal,
   plan,
   posixPath,
@@ -81,6 +82,7 @@ export function registerHandlers(): void {
           path: posixPath,
           roots: parsed.value.roots,
           libraryRoot: parsed.value.libraryRoot,
+          profile: parsed.value.profile,
           onProgress: (count, currentPath) => {
             reportProgress(event, {
               kind: PROGRESS_KIND.SCAN,
@@ -115,9 +117,19 @@ export function registerHandlers(): void {
         const result = await apply({
           fs,
           path: posixPath,
-          // Applying needs only the moves; the scan roots mattered when the
-          // destinations were derived, which has already happened.
-          plan: { libraryRoot, scanRoots: [], occupied: [], moves, groups: [], untouched: [], problems: [] },
+          // Applying needs only the moves; the scan roots and the layout
+          // mattered when the destinations were derived, which has already
+          // happened.
+          plan: {
+            libraryRoot,
+            profile: DEFAULT_SORTING_PROFILE,
+            scanRoots: [],
+            occupied: [],
+            moves,
+            groups: [],
+            untouched: [],
+            problems: [],
+          },
           journal: new Journal(fs, posixPath, libraryRoot),
           runId,
           onProgress: (done, total, currentPath) => {

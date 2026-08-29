@@ -1,8 +1,8 @@
 # STL Manager
 
 Finds 3D model files scattered across your machine and moves them into one
-structured library. Models that share a name share a folder. Models that share
-a purpose sit together under a shared parent folder.
+structured library. You choose how it should be laid out before it starts, and
+names decide what every folder is called.
 
 Nothing is moved until you have reviewed exactly what would happen, and every
 run can be reversed.
@@ -16,6 +16,54 @@ for other people, and pulling from Google Drive.
 The Drive integration is the one part not exercised against the real service,
 because that needs your own Google OAuth client. See `docs/google-drive.md`. See the
 documents in `docs/design/`.
+
+## Choosing a layout
+
+Before a scan you pick one of four layouts. It decides the shape of the whole
+library, so it is chosen up front rather than adjusted afterwards. Names matter
+under all of them; what changes is how much they are allowed to pull together,
+and what sits above them.
+
+**By family**, the default. Models whose names begin with the same word share a
+folder, and a source folder that held several of those families becomes a
+parent above them.
+
+**By name.** Every distinct name gets its own folder, with nothing above it.
+Nothing is merged and nothing is inferred, which suits a collection whose names
+are already deliberate.
+
+**By the folder they came from.** Families as above, but always kept under the
+folder they came from, even one that produced a single family. For a collection
+already sorted into folders worth keeping.
+
+**By file type.** Families gathered under `STL`, `OBJ`, `3MF` and so on, for a
+collection mixing meshes with project and slicer files.
+
+The same three files under each:
+
+```
+by family                 by name
+
+cam_v1/                   cam_v1_high/
+  cam_v1_high.stl           cam_v1_high.stl
+  cam_v1_mild.stl         cam_v1_mild/
+gear/                       cam_v1_mild.stl
+  gear.obj                gear/
+                            gear.obj
+
+by folder                 by file type
+
+Camshaft/                 OBJ/
+  cam_v1/                   gear/
+    cam_v1_high.stl           gear.obj
+    cam_v1_mild.stl       STL/
+Gears/                      cam_v1/
+  gear/                       cam_v1_high.stl
+    gear.obj                  cam_v1_mild.stl
+```
+
+The layout you chose is remembered for next time. Everything below describes
+the default; the rules on names, duplicates and companions apply to all four.
 
 ## How the sorting works
 
@@ -43,9 +91,10 @@ useful.
 
 **Shared parent folders.** A family sits under a parent named after the folder
 its files came from, but only when that folder held two or more families and
-its name actually describes something. Folders called `Downloads`, `Desktop`,
-`Models` or `Unsorted` never become categories: they say where a file landed,
-not what it is.
+its name actually describes something. Sorting by the folder they came from
+drops the two-family requirement. Folders called `Downloads`, `Desktop`,
+`Models` or `Unsorted` never become categories under any layout: they say where
+a file landed, not what it is.
 
 **Names.** A file's name is normalised before it is compared: lowercased, with
 underscores, hyphens and dots treated as spaces, and any duplicate marker

@@ -45,6 +45,12 @@ const EXPECTED_BRIDGE_METHODS = [
 
 const EXPECTED_BACKGROUND = "rgb(250, 249, 246)";
 
+/** Every library layout the setup screen offers, in order. */
+const EXPECTED_LAYOUTS = ["family", "name", "source", "type"];
+
+/** The palette's accent, which every control must follow rather than blue. */
+const EXPECTED_ACCENT = "rgb(184, 134, 11)";
+
 app.whenReady().then(async () => {
   const window = new BrowserWindow({
     show: false,
@@ -66,6 +72,12 @@ app.whenReady().then(async () => {
     buttons: [...document.querySelectorAll("button")].map((b) => b.textContent),
     background: getComputedStyle(document.body).backgroundColor,
     headingFont: getComputedStyle(document.querySelector("h1")).fontFamily,
+    layouts: [...document.querySelectorAll('input[name="layout"]')].map((input) => ({
+      value: input.value,
+      checked: input.checked,
+      // The palette rules out the browser's default blue on a control.
+      accent: getComputedStyle(input).accentColor,
+    })),
   }))()`);
 
   const failures = [];
@@ -86,6 +98,15 @@ app.whenReady().then(async () => {
   }
   if (!report.headingFont.toLowerCase().includes("georgia")) {
     failures.push(`headings are not serif: ${report.headingFont}`);
+  }
+  if (report.layouts.map((layout) => layout.value).join() !== EXPECTED_LAYOUTS.join()) {
+    failures.push(`the layout chooser offered ${JSON.stringify(report.layouts)}`);
+  }
+  if (report.layouts.filter((layout) => layout.checked).length !== 1) {
+    failures.push("exactly one layout should be chosen when the screen opens");
+  }
+  if (report.layouts.some((layout) => layout.accent !== EXPECTED_ACCENT)) {
+    failures.push(`a layout control is not the palette accent: ${JSON.stringify(report.layouts)}`);
   }
   if (JSON.stringify(report.bridgeMethods) !== JSON.stringify(EXPECTED_BRIDGE_METHODS)) {
     failures.push(`the bridge exposed ${JSON.stringify(report.bridgeMethods)}`);

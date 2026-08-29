@@ -1,6 +1,11 @@
 import { groupIntoFamilies, type FamilyCandidate } from "./families.js";
 import type { PathUtil } from "./fileSystem.js";
 import { toNameKey } from "./nameKey.js";
+import {
+  DEFAULT_SORTING_PROFILE,
+  SORTING_PROFILE,
+  type SortingProfile,
+} from "./sortingProfile.js";
 import { FILE_KIND, type ScannedFile } from "./types.js";
 
 /**
@@ -77,6 +82,21 @@ const MINIMUM_FAMILIES_FOR_PURPOSE = 2;
  */
 const UNNAMED_NUMBERED_SET = "Numbered set";
 
+/**
+ * Names the file type a family mostly consists of, as a folder name.
+ *
+ * Model files decide it. A family of meshes with a readme beside them is a
+ * family of meshes, and filing it under TXT would be absurd.
+ */
+function typeLabel(files: ScannedFile[]): string | undefined {
+  const models = files.filter((file) => file.kind !== FILE_KIND.COMPANION);
+  const deciding = models.length > 0 ? models : files;
+  const label = mostCommon(
+    deciding.map((file) => file.ext.replace(/^\./, "").toUpperCase()).filter((ext) => ext !== ""),
+  );
+  return label === "" ? undefined : label;
+}
+
 function newestTime(file: ScannedFile): number {
   return file.birthtimeMs > 0 ? file.birthtimeMs : file.mtimeMs;
 }
@@ -138,6 +158,48 @@ function dominantDirectory(files: ScannedFile[]): string | undefined {
   return best;
 }
 
+/** Everything the purpose decision depends on, for one family. */
+interface PurposeContext {
+  profile: SortingProfile;
+  files: ScannedFile[];
+  /** The name of the folder the family mostly came from. */
+  folderName: string;
+  /** False when that folder name only says where files landed. */
+  isInformative: boolean;
+  /** How many whole families that folder produced. */
+  familyCount: number;
+  isNumberedSet: boolean;
+}
+
+/**
+ * Chooses the parent folder a family sits under, if any.
+ *
+ * This is where the chosen layout does most of its work: the folders a library
+ * grows are decided here and by whether names were merged into families at all.
+ */
+function purposeFor(context: PurposeContext): string | undefined {
+  const { profile, folderName, isInformative, familyCount, isNumberedSet } = context;
+
+  if (profile === SORTING_PROFILE.NAME) {
+    return undefined;
+  }
+  if (profile === SORTING_PROFILE.TYPE) {
+    return typeLabel(context.files);
+  }
+
+  // A numbered set is already named after its folder, so nesting it inside a
+  // folder of the same name would just repeat itself.
+  if (isNumberedSet || !isInformative || folderName === "") {
+    return undefined;
+  }
+
+  // Keeping the source arrangement means trusting a folder that produced a
+  // single family, which the default deliberately does not.
+  const required =
+    profile === SORTING_PROFILE.SOURCE ? 1 : MINIMUM_FAMILIES_FOR_PURPOSE;
+  return familyCount >= required ? folderName : undefined;
+}
+
 /**
  * Turns a scan inventory into families of related models.
  *
@@ -150,11 +212,20 @@ function dominantDirectory(files: ScannedFile[]): string | undefined {
  * distinct families. A folder called "Downloads" says nothing about what is in
  * it, so it never becomes a category.
  *
+ * All of that describes the default layout. Another may keep every name apart,
+ * always honour the folder a file came from, or file everything under its type
+ * instead; names still decide what a folder is called under all of them.
+ *
  * @param files - The inventory produced by a scan
  * @param path - Path utility for the current platform
+ * @param profile - The library layout to build
  * @returns Families sorted by display name
  */
-export function group(files: ScannedFile[], path: PathUtil): FileGroup[] {
+export function group(
+  files: ScannedFile[],
+  path: PathUtil,
+  profile: SortingProfile = DEFAULT_SORTING_PROFILE,
+): FileGroup[] {
   const byNameKey = new Map<string, ScannedFile[]>();
   for (const file of files) {
     const nameKey = toNameKey(file.stem);
@@ -186,7 +257,16 @@ export function group(files: ScannedFile[], path: PathUtil): FileGroup[] {
     });
   }
 
-  const families = groupIntoFamilies(candidates, path);
+  // One folder per name means no merging at all: every candidate stands as its
+  // own family, so nothing is pulled together by a shared first word.
+  const families =
+    profile === SORTING_PROFILE.NAME
+      ? candidates.map((candidate) => ({
+          label: candidate.stem,
+          nameKeys: [candidate.nameKey],
+          isNumberedSet: false,
+        }))
+      : groupIntoFamilies(candidates, path);
 
   // A folder only counts towards a purpose when it produced whole families,
   // so a folder holding one family and its parts is not a category.
@@ -218,13 +298,14 @@ export function group(files: ScannedFile[], path: PathUtil): FileGroup[] {
     const isInformative = !UNINFORMATIVE_FOLDER_NAMES.has(folderName.toLowerCase());
     const familyCount = directory === undefined ? 0 : (familiesPerDirectory.get(directory)?.size ?? 0);
 
-    // A numbered set is already named after its folder, so nesting it inside a
-    // folder of the same name would just repeat itself.
-    const hasPurpose =
-      !family.isNumberedSet &&
-      isInformative &&
-      folderName !== "" &&
-      familyCount >= MINIMUM_FAMILIES_FOR_PURPOSE;
+    const purpose = purposeFor({
+      profile,
+      files: familyFiles,
+      folderName,
+      isInformative,
+      familyCount,
+      isNumberedSet: family.isNumberedSet,
+    });
 
     const displayName = (() => {
       if (family.isNumberedSet) {
@@ -239,7 +320,7 @@ export function group(files: ScannedFile[], path: PathUtil): FileGroup[] {
     groups.push({
       id: family.nameKeys.join("|"),
       displayName,
-      purpose: hasPurpose ? folderName : undefined,
+      purpose,
       isNumberedSet: family.isNumberedSet,
       files: familyFiles,
     });

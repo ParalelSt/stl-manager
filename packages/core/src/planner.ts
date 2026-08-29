@@ -5,6 +5,7 @@ import { group } from "./grouper.js";
 import { toNameKey } from "./nameKey.js";
 import { readLibraryTree } from "./readLibraryTree.js";
 import { scan } from "./scanner.js";
+import { DEFAULT_SORTING_PROFILE, type SortingProfile } from "./sortingProfile.js";
 import {
   FILE_KIND,
   MOVE_REASON,
@@ -54,6 +55,14 @@ export interface GroupPlan {
 /** A complete proposal, ready to be reviewed and edited. */
 export interface PlanModel {
   libraryRoot: string;
+  /**
+   * The layout this plan was built for.
+   *
+   * Carried so the review screen can say which one produced these folders. It
+   * is not consulted when deriving moves: by that point the layout has already
+   * become the groups and their purposes.
+   */
+  profile: SortingProfile;
   /** The folders that were scanned, used to keep quarantine paths short. */
   scanRoots: string[];
   /**
@@ -81,6 +90,8 @@ export interface PlanOptions {
   path: PathUtil;
   roots: string[];
   libraryRoot: string;
+  /** The library layout to build. Defaults to grouping by family. */
+  profile?: SortingProfile;
   onProgress?: (count: number, currentPath: string) => void;
 }
 
@@ -300,6 +311,7 @@ function byExtension(files: ScannedFile[]): Map<string, ScannedFile[]> {
  */
 export async function plan(options: PlanOptions): Promise<SortPlan> {
   const { fs, path, roots, libraryRoot, onProgress } = options;
+  const profile = options.profile ?? DEFAULT_SORTING_PROFILE;
 
   const scanned = await scan({
     fs,
@@ -312,7 +324,7 @@ export async function plan(options: PlanOptions): Promise<SortPlan> {
   const models = scanned.files.filter((file) => file.kind !== FILE_KIND.COMPANION);
   const companionFiles = scanned.files.filter((file) => file.kind === FILE_KIND.COMPANION);
 
-  const grouped = group(models, path);
+  const grouped = group(models, path, profile);
   const assignment = attachCompanions(grouped, companionFiles);
 
   const groups: GroupPlan[] = [];
@@ -371,6 +383,7 @@ export async function plan(options: PlanOptions): Promise<SortPlan> {
 
   const model: PlanModel = {
     libraryRoot,
+    profile,
     scanRoots: roots,
     occupied,
     groups,

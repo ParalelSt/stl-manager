@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button, BUTTON_TONE } from "../components/Button.js";
+import { layoutName } from "../components/LayoutChooser.js";
 import { LibraryTree } from "../components/LibraryTree.js";
 import { WarningIcon } from "../components/icons/WarningIcon.js";
 import { useReview } from "../hooks/useReview.js";
@@ -106,8 +107,9 @@ export function ReviewScreen() {
           <p className="text-muted text-xs tracking-[0.2em] uppercase">Step three</p>
           <h1 className="font-serif mt-3 text-5xl leading-tight">Check the plan</h1>
           <p className="text-muted mt-4 max-w-prose">
-            This is the library you would end up with. Rename a folder, drag a model into a
-            different one, or leave a folder out. Still nothing has moved.
+            This is the library you would end up with, sorted {layoutName(plan.profile)}. Rename
+            a folder, drag a model into a different one, or leave a folder out. Still nothing has
+            moved.
           </p>
           {problems}
           {untouched}
