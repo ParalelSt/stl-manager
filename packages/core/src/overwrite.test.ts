@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from "node:fs/promises";
+import { makeTempDir } from "./testing.js";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { apply, Journal, plan, posixPath } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -14,7 +15,7 @@ import { describe, expect, it } from "vitest";
  */
 describe("applying twice into one library", () => {
   it("does not silently overwrite a file already there", async () => {
-    const base = await realpath(await mkdtemp("/tmp/stl-overwrite-"));
+    const base = await makeTempDir("stl-overwrite");
     const source = join(base, "in");
     const library = join(base, "lib");
     await mkdir(source, { recursive: true });

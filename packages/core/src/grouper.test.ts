@@ -130,7 +130,6 @@ describe("group", () => {
   });
 });
 
-
 describe("grouping into families", () => {
   it("puts models sharing a first word in one folder", () => {
     const groups = group(

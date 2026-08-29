@@ -4,6 +4,7 @@
  * A separate entry point so this never reaches a production bundle, in the
  * same way the Node adapter is separated from the pure engine.
  */
+export { makeTempDir } from "./tempDir.js";
 export {
   MemoryFileSystem,
   toPlainFileSystem,

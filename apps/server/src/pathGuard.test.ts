@@ -1,5 +1,5 @@
-import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createPathGuard, type PathGuard } from "./pathGuard.js";
@@ -19,7 +19,7 @@ describe("PathGuard", () => {
   let guard: PathGuard;
 
   beforeEach(async () => {
-    base = await realpath(await mkdtemp(join(tmpdir(), "stl-guard-")));
+    base = await makeTempDir("stl-guard");
     root = join(base, "data");
     outside = join(base, "secret");
     await mkdir(root, { recursive: true });
@@ -131,7 +131,7 @@ describe("PathGuard.confineNew", () => {
   let guard: PathGuard;
 
   beforeEach(async () => {
-    base = await realpath(await mkdtemp(join(tmpdir(), "stl-new-")));
+    base = await makeTempDir("stl-new");
     root = join(base, "lib");
     await mkdir(root, { recursive: true });
     guard = createPathGuard([root]);
@@ -178,7 +178,7 @@ describe("PathGuard with a symlinked root", () => {
   let link: string;
 
   beforeEach(async () => {
-    base = await realpath(await mkdtemp(join(tmpdir(), "stl-linkroot-")));
+    base = await makeTempDir("stl-linkroot");
     real = join(base, "real");
     link = join(base, "link");
     await mkdir(join(real, "models"), { recursive: true });

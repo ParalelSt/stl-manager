@@ -1,5 +1,5 @@
-import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { makeTempDir } from "./testing.js";
+import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { apply } from "./applier.js";
@@ -37,7 +37,7 @@ describe("the whole pipeline", () => {
   }
 
   beforeEach(async () => {
-    root = await mkdtemp(join(tmpdir(), "stl-manager-pipeline-"));
+    root = await makeTempDir("stl-manager-pipeline");
     source = join(root, "source");
     library = join(root, "library");
     await mkdir(join(source, "Terrain Pack"), { recursive: true });

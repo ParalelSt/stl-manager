@@ -47,3 +47,6 @@ apps/server/dist-web/
 
 # Packaged applications
 apps/desktop/release/
+
+# Test fixtures, kept inside the project
+.tmp/

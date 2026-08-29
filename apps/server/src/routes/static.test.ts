@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { makeTempDir } from "@stl-manager/core/testing";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { posixPath } from "@stl-manager/core";
 import { NodeFileSystem } from "@stl-manager/core/node";
@@ -15,7 +16,7 @@ describe("serving the interface", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(async () => {
-    base = await mkdtemp("/tmp/stl-static-");
+    base = await makeTempDir("stl-static");
     webRoot = join(base, "web");
     await mkdir(join(webRoot, "assets"), { recursive: true });
     await writeFile(join(webRoot, "index.html"), "<!doctype html><title>STL Manager</title>");
