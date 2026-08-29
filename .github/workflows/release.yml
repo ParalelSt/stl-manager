@@ -41,14 +41,11 @@ jobs:
       - name: Package
         run: npm run ${{ matrix.script }} -w apps/desktop
         env:
-          # Signing only happens where a certificate is configured. Without
-          # one the build still produces a working application, unsigned.
-          # Auto-discovery is off because otherwise electron-builder finds no
-          # certificate on the runner, tries to sign with an empty one, and
-          # fails the build rather than leaving it unsigned.
+          # Builds made here are unsigned. There is no certificate on a runner,
+          # and pointing electron-builder at an absent one fails the build
+          # rather than leaving it unsigned. A signed macOS build is made
+          # locally, where the certificate lives.
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          CSC_LINK: ${{ secrets.MAC_CERTIFICATE }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
       - uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.os }}
